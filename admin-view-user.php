@@ -101,25 +101,77 @@ $logs_query .= " ORDER BY l.timestamp DESC LIMIT ? OFFSET ?";
 
 // Count total access logs for this user (with filters applied)
 $stmt_total = mysqli_prepare($conn, $count_query);
-// Dynamically bind parameters based on what filters are applied
-$param_types = str_repeat('s', count($query_params));
-$stmt_total_params = array_merge([$stmt_total, $param_types], $query_params);
-call_user_func_array('mysqli_stmt_bind_param', $stmt_total_params);
+
+// Build parameter types string based on number of parameters
+$param_types = 'i'; // First param is always user_id (integer)
+if (!empty($filter_start_date)) {
+    $param_types .= 's'; // String for date
+}
+if (!empty($filter_end_date)) {
+    $param_types .= 's'; // String for date
+}
+
+// Bind parameters - must be passed by reference
+$bind_params = array();
+$bind_params[] = &$param_types;
+$temp_user_id = $user_id;
+$bind_params[] = &$temp_user_id;
+
+// Add date parameters if needed (by reference)
+if (!empty($filter_start_date)) {
+    $temp_start_date = $filter_start_date;
+    $bind_params[] = &$temp_start_date;
+}
+if (!empty($filter_end_date)) {
+    $temp_end_date = $filter_end_date;
+    $bind_params[] = &$temp_end_date;
+}
+
+// Call bind_param with the array of references
+call_user_func_array(array($stmt_total, 'bind_param'), $bind_params);
 mysqli_stmt_execute($stmt_total);
 $result_total = mysqli_stmt_get_result($stmt_total);
 $total_records = mysqli_fetch_assoc($result_total)['total'] ?? 0;
 $total_pages = ceil($total_records / $limit);
 mysqli_stmt_close($stmt_total);
 
-// Add pagination parameters to query params
-$logs_params = array_merge($query_params, [$limit, $offset]);
-
-// Fetch access logs with filtering and pagination
+// Now handle the logs query with pagination
 $stmt_logs = mysqli_prepare($conn, $logs_query);
-// Bind all parameters (user_id, date filters if any, limit, offset)
-$param_types = str_repeat('s', count($query_params)) . 'ii'; // Add 'ii' for limit and offset
-$stmt_logs_params = array_merge([$stmt_logs, $param_types], $logs_params);
-call_user_func_array('mysqli_stmt_bind_param', $stmt_logs_params);
+
+// Build parameter types string based on number of parameters
+$param_types = 'i'; // First param is always user_id (integer)
+if (!empty($filter_start_date)) {
+    $param_types .= 's'; // String for date
+}
+if (!empty($filter_end_date)) {
+    $param_types .= 's'; // String for date
+}
+$param_types .= 'ii'; // Add integer types for LIMIT and OFFSET
+
+// Bind parameters - must be passed by reference
+$bind_params = array();
+$bind_params[] = &$param_types;
+$temp_user_id = $user_id;
+$bind_params[] = &$temp_user_id;
+
+// Add date parameters if needed (by reference)
+if (!empty($filter_start_date)) {
+    $temp_start_date = $filter_start_date;
+    $bind_params[] = &$temp_start_date;
+}
+if (!empty($filter_end_date)) {
+    $temp_end_date = $filter_end_date;
+    $bind_params[] = &$temp_end_date;
+}
+
+// Add limit and offset parameters (by reference)
+$temp_limit = $limit;
+$temp_offset = $offset;
+$bind_params[] = &$temp_limit;
+$bind_params[] = &$temp_offset;
+
+// Call bind_param with the array of references
+call_user_func_array(array($stmt_logs, 'bind_param'), $bind_params);
 mysqli_stmt_execute($stmt_logs);
 $result_logs = mysqli_stmt_get_result($stmt_logs);
 
