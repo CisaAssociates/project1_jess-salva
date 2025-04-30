@@ -4,7 +4,7 @@ session_start();
 
 // Redirect if user data is not in session
 if (!isset($_SESSION['user_data'])) {
-    header("Location: login.php"); // Or your login page
+    header("Location: index.php"); // Or your login page
     exit();
 }
 
