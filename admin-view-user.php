@@ -205,6 +205,19 @@ $result_logs = mysqli_stmt_get_result($stmt_logs);
 
                 <div class="table-container table-responsive">
                     <h2>Access Log History</h2>
+                    
+                    <form method="GET" action="" class="filter-form">
+                        <div>
+                            <label for="start_date">From:</label>
+                            <input type="date" id="start_date" name="start_date" value="<?= htmlspecialchars($filter_start_date) ?>">
+                        </div>
+                        <div>
+                            <label for="end_date">To:</label>
+                            <input type="date" id="end_date" name="end_date" value="<?= htmlspecialchars($filter_end_date) ?>">
+                        </div>
+                        <button type="submit">Filter</button>
+                        <a href="?" class="clear-filter-link">Clear Filter</a>
+                    </form>
 
                     <div class="table-controls">
                         <input type="text" id="searchInput" class="search-input" placeholder="Search logs on this page...">
