@@ -321,7 +321,7 @@ $result_logs = mysqli_stmt_get_result($stmt_logs);
                 <div class="table-container table-responsive">
                     <h2>Access Log History</h2>
                     
-                    <form method="GET" action="" class="filter-form">
+                    <form method="GET" action="admin-view-user.php" class="filter-form">
                         <div>
                             <label for="start_date">From:</label>
                             <input type="date" id="start_date" name="start_date" value="<?= htmlspecialchars($filter_start_date) ?>">
@@ -331,7 +331,7 @@ $result_logs = mysqli_stmt_get_result($stmt_logs);
                             <input type="date" id="end_date" name="end_date" value="<?= htmlspecialchars($filter_end_date) ?>">
                         </div>
                         <button type="submit">Filter</button>
-                        <a href="?" class="clear-filter-link">Clear Filter</a>
+                        <a href="" class="clear-filter-link">Clear Filter</a>
                     </form>
 
                     <div class="table-controls">
