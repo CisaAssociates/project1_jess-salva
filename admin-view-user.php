@@ -82,46 +82,29 @@ $logs_query = "
     LEFT JOIN users u ON l.user_id = u.user_id
     WHERE l.user_id = ? AND l.access_granted = 1";
 
-// Add date filters if provided
-$count_query_params = [$user_id];
-$logs_query_params = [$user_id];
+// Build parameter types string and array of references for the count query
+$count_param_types = 'i'; // user_id (integer)
+$count_bind_params = [&$count_param_types]; // Start the array with the type string reference
+$count_bind_params[] = &$user_id; // Add user_id reference
 
 if (!empty($filter_start_date)) {
     $count_query .= " AND DATE(timestamp) >= ?";
-    $logs_query .= " AND DATE(timestamp) >= ?";
-    $count_query_params[] = $filter_start_date;
-    $logs_query_params[] = $filter_start_date;
+    $count_param_types .= 's'; // start_date (string)
+    $count_bind_params[] = &$filter_start_date; // Add start_date reference
 }
 
 if (!empty($filter_end_date)) {
     $count_query .= " AND DATE(timestamp) <= ?";
-    $logs_query .= " AND DATE(timestamp) <= ?";
-    $count_query_params[] = $filter_end_date;
-    $logs_query_params[] = $filter_end_date;
+    $count_param_types .= 's'; // end_date (string)
+    $count_bind_params[] = &$filter_end_date; // Add end_date reference
 }
 
-// Complete the logs query with order and limit
-$logs_query .= " ORDER BY l.timestamp DESC LIMIT ? OFFSET ?";
-$logs_query_params[] = $limit; // Add limit to the logs parameters
-$logs_query_params[] = $offset; // Add offset to the logs parameters
 
 // Count total access logs for this user (with filters applied)
 $stmt_total = mysqli_prepare($conn, $count_query);
 
-// Build parameter types string for the count query
-$count_param_types = 'i'; // user_id (integer)
-if (!empty($filter_start_date)) {
-    $count_param_types .= 's'; // start_date (string)
-}
-if (!empty($filter_end_date)) {
-    $count_param_types .= 's'; // end_date (string)
-}
-
-// Bind parameters for count query using splat operator
-if (!empty($count_query_param_values)) {
-    // Pass the parameter types string and then unpack the array of values
-    mysqli_stmt_bind_param($stmt_total, $count_param_types, ...$count_query_params);
-}
+// Bind parameters for count query using call_user_func_array with references
+call_user_func_array('mysqli_stmt_bind_param', array_merge([$stmt_total], $count_bind_params));
 
 mysqli_stmt_execute($stmt_total);
 $result_total = mysqli_stmt_get_result($stmt_total);
@@ -132,23 +115,34 @@ mysqli_stmt_close($stmt_total);
 // Now handle the logs query with pagination
 $stmt_logs = mysqli_prepare($conn, $logs_query);
 
-// Build parameter types string for the logs query (includes limit and offset)
+// Build parameter types string and array of references for the logs query
 $logs_param_types = 'i'; // user_id (integer)
+$logs_bind_params = [&$logs_param_types]; // Start the array with the type string reference
+$logs_bind_params[] = &$user_id; // Add user_id reference
+
 if (!empty($filter_start_date)) {
+    $logs_query .= " AND DATE(timestamp) >= ?";
     $logs_param_types .= 's'; // start_date (string)
+    $logs_bind_params[] = &$filter_start_date; // Add start_date reference
 }
+
 if (!empty($filter_end_date)) {
+    $logs_query .= " AND DATE(timestamp) <= ?";
     $logs_param_types .= 's'; // end_date (string)
+    $logs_bind_params[] = &$filter_end_date; // Add end_date reference
 }
+
+// Complete the logs query with order and limit
+$logs_query .= " ORDER BY l.timestamp DESC LIMIT ? OFFSET ?";
 $logs_param_types .= 'ii'; // LIMIT and OFFSET (integers)
+$logs_bind_params[] = &$limit; // Add limit reference
+$logs_bind_params[] = &$offset; // Add offset reference
 
-// Bind parameters for logs query using splat operator
-if (!empty($logs_query_params)) {
-     // Pass the parameter types string and then unpack the array of values
-    mysqli_stmt_bind_param($stmt_logs, $logs_param_types, ...$logs_query_params);
-}
 
-mysqli_stmt_execute($stmt_logs);
+// Bind parameters for logs query using call_user_func_array with references
+call_user_func_array('mysqli_stmt_bind_param', array_merge([$stmt_logs], $logs_bind_params)); // This line corresponds to the area of line 126
+
+mysqli_stmt_execute($stmt_logs); // This should now have parameters bound
 $result_logs = mysqli_stmt_get_result($stmt_logs);
 
 ?>
@@ -315,7 +309,7 @@ $result_logs = mysqli_stmt_get_result($stmt_logs);
                      <li>
                         <a href="./attendance-dashboard.php" class="nav-link">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 0 00-2 2v12a2 2 0 002 2z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg> <span>Overall Logs</span>
                         </a>
                     </li>
