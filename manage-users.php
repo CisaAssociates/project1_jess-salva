@@ -136,7 +136,7 @@ $result_users = mysqli_stmt_get_result($stmt_users);
 
                     <div class="table-controls">
                         <input type="text" id="searchInput" class="search-input" placeholder="Search users on this page...">
-                        <button class="button primary" onclick="window.location.href='localhost/client/admin_register_user.php'">Add New User</button>
+                        <button class="button primary" onclick="window.location.href='http://localhost/client/admin_register_user.php'">Add New User</button>
                     </div>
 
                     <table>
