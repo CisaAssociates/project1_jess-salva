@@ -61,14 +61,14 @@ $sql_from_joins = "
     LEFT JOIN rfidcards r ON l.rfid_scanned = r.card_id
     LEFT JOIN users u ON r.user_id = u.user_id
     JOIN (
-        SELECT user_id, MAX(timestamp) AS latest_time
+        SELECT user_id, DATE(timestamp) AS log_date, MAX(timestamp) AS latest_time
         FROM accesslogs
-        GROUP BY user_id
+        GROUP BY user_id, DATE(timestamp)
     ) recent_logs
-      ON l.user_id = recent_logs.user_id
+      ON l.user_id = recent_logs.user_id -- Check if l.user_id exists in accesslogs
+     AND DATE(l.timestamp) = recent_logs.log_date
      AND l.timestamp = recent_logs.latest_time
 ";
-
 
 // --- Build Dynamic WHERE Clause & Parameters ---
 $where_clauses = ["u.user_id IS NOT NULL", "l.access_granted = 1"]; // Base conditions
