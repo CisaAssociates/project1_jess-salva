@@ -74,6 +74,7 @@ $page = (isset($_GET['page']) && is_numeric($_GET['page'])) ? (int)$_GET['page']
 $offset = ($page - 1) * $limit;
 
 // Build the base query for the total count and access logs
+// We only count/display access_granted = 1 logs for attendance
 $count_query = "SELECT COUNT(*) as total FROM accesslogs WHERE user_id = ? AND access_granted = 1";
 $logs_query = "
     SELECT l.*, u.first_name, u.last_name
@@ -82,53 +83,46 @@ $logs_query = "
     WHERE l.user_id = ? AND l.access_granted = 1";
 
 // Add date filters if provided
-$query_params = [$user_id];
+$count_query_params = [$user_id];
+$logs_query_params = [$user_id];
 
 if (!empty($filter_start_date)) {
     $count_query .= " AND DATE(timestamp) >= ?";
     $logs_query .= " AND DATE(timestamp) >= ?";
-    $query_params[] = $filter_start_date;
+    $count_query_params[] = $filter_start_date;
+    $logs_query_params[] = $filter_start_date;
 }
 
 if (!empty($filter_end_date)) {
     $count_query .= " AND DATE(timestamp) <= ?";
     $logs_query .= " AND DATE(timestamp) <= ?";
-    $query_params[] = $filter_end_date;
+    $count_query_params[] = $filter_end_date;
+    $logs_query_params[] = $filter_end_date;
 }
 
 // Complete the logs query with order and limit
 $logs_query .= " ORDER BY l.timestamp DESC LIMIT ? OFFSET ?";
+$logs_query_params[] = $limit; // Add limit to the logs parameters
+$logs_query_params[] = $offset; // Add offset to the logs parameters
 
 // Count total access logs for this user (with filters applied)
 $stmt_total = mysqli_prepare($conn, $count_query);
 
-// Build parameter types string based on number of parameters
-$param_types = 'i'; // First param is always user_id (integer)
+// Build parameter types string for the count query
+$count_param_types = 'i'; // user_id (integer)
 if (!empty($filter_start_date)) {
-    $param_types .= 's'; // String for date
+    $count_param_types .= 's'; // start_date (string)
 }
 if (!empty($filter_end_date)) {
-    $param_types .= 's'; // String for date
+    $count_param_types .= 's'; // end_date (string)
 }
 
-// Bind parameters - must be passed by reference
-$bind_params = array();
-$bind_params[] = &$param_types;
-$temp_user_id = $user_id;
-$bind_params[] = &$temp_user_id;
-
-// Add date parameters if needed (by reference)
-if (!empty($filter_start_date)) {
-    $temp_start_date = $filter_start_date;
-    $bind_params[] = &$temp_start_date;
-}
-if (!empty($filter_end_date)) {
-    $temp_end_date = $filter_end_date;
-    $bind_params[] = &$temp_end_date;
+// Bind parameters for count query using splat operator
+if (!empty($count_query_param_values)) {
+    // Pass the parameter types string and then unpack the array of values
+    mysqli_stmt_bind_param($stmt_total, $count_param_types, ...$count_query_params);
 }
 
-// Call bind_param with the array of references
-call_user_func_array(array($stmt_total, 'bind_param'), $bind_params);
 mysqli_stmt_execute($stmt_total);
 $result_total = mysqli_stmt_get_result($stmt_total);
 $total_records = mysqli_fetch_assoc($result_total)['total'] ?? 0;
@@ -138,40 +132,22 @@ mysqli_stmt_close($stmt_total);
 // Now handle the logs query with pagination
 $stmt_logs = mysqli_prepare($conn, $logs_query);
 
-// Build parameter types string based on number of parameters
-$param_types = 'i'; // First param is always user_id (integer)
+// Build parameter types string for the logs query (includes limit and offset)
+$logs_param_types = 'i'; // user_id (integer)
 if (!empty($filter_start_date)) {
-    $param_types .= 's'; // String for date
+    $logs_param_types .= 's'; // start_date (string)
 }
 if (!empty($filter_end_date)) {
-    $param_types .= 's'; // String for date
+    $logs_param_types .= 's'; // end_date (string)
 }
-$param_types .= 'ii'; // Add integer types for LIMIT and OFFSET
+$logs_param_types .= 'ii'; // LIMIT and OFFSET (integers)
 
-// Bind parameters - must be passed by reference
-$bind_params = array();
-$bind_params[] = &$param_types;
-$temp_user_id = $user_id;
-$bind_params[] = &$temp_user_id;
-
-// Add date parameters if needed (by reference)
-if (!empty($filter_start_date)) {
-    $temp_start_date = $filter_start_date;
-    $bind_params[] = &$temp_start_date;
-}
-if (!empty($filter_end_date)) {
-    $temp_end_date = $filter_end_date;
-    $bind_params[] = &$temp_end_date;
+// Bind parameters for logs query using splat operator
+if (!empty($logs_query_params)) {
+     // Pass the parameter types string and then unpack the array of values
+    mysqli_stmt_bind_param($stmt_logs, $logs_param_types, ...$logs_query_params);
 }
 
-// Add limit and offset parameters (by reference)
-$temp_limit = $limit;
-$temp_offset = $offset;
-$bind_params[] = &$temp_limit;
-$bind_params[] = &$temp_offset;
-
-// Call bind_param with the array of references
-call_user_func_array(array($stmt_logs, 'bind_param'), $bind_params);
 mysqli_stmt_execute($stmt_logs);
 $result_logs = mysqli_stmt_get_result($stmt_logs);
 
@@ -182,7 +158,7 @@ $result_logs = mysqli_stmt_get_result($stmt_logs);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Access Logs</title>
+    <title>Dashboard - User Attendance</title>
     <link rel="stylesheet" href="./styles/style.css">
     <link rel="stylesheet" href="./styles/user-dashboard.css">
     <style>
@@ -295,10 +271,10 @@ $result_logs = mysqli_stmt_get_result($stmt_logs);
              display: inline-block;
              text-align: center;
              line-height: normal;
-        }
-        .filter-form .clear-filter-link:hover {
+         }
+         .filter-form .clear-filter-link:hover {
              background-color: #ec971f;
-        }
+         }
     </style>
 </head>
 
@@ -307,8 +283,7 @@ $result_logs = mysqli_stmt_get_result($stmt_logs);
         <div>Loading...</div>
     </div>
 
-    <div class="dashboard-layout" id="dashboard-layout">
-        <nav class="navbar">
+    <div class="dashboard-layout hidden" id="dashboard-layout"> <nav class="navbar">
             <div class="navbar-content">
                 <div class="navbar-left">
                     <button class="hamburger-button" id="hamburger-button" aria-label="Toggle sidebar">
@@ -331,23 +306,21 @@ $result_logs = mysqli_stmt_get_result($stmt_logs);
             <div class="sidebar-content">
                 <ul class="sidebar-nav">
                     <li>
-                        <a href="./admin-dashboard.php" class="nav-link active">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <a href="./admin-dashboard.php" class="nav-link"> <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                             </svg>
                             <span>Main Dashboard</span>
                         </a>
                     </li>
-                    <li>
-                        <a href="./attendance-dashboard.php" class="nav-link ">
+                     <li>
+                        <a href="./attendance-dashboard.php" class="nav-link">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg> <span>Attendance Logs</span>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg> <span>Overall Logs</span>
                         </a>
                     </li>
                     <li>
-                        <a href="./manage-users.php" class="nav-link">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <a href="./manage-users.php" class="nav-link active"> <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                             </svg>
                             <span>Manage Users</span>
@@ -383,18 +356,7 @@ $result_logs = mysqli_stmt_get_result($stmt_logs);
                     <div class="card">
                         <h2>Quick Stats</h2>
                         <div class="stats-item">
-                            <div class="stats-icon-wrapper">
-                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
-                                </svg>
-                            </div>
-                            <div class="stats-text">
-                                <p>Registered Card</p>
-                                <p><?= $card_id ? htmlspecialchars($card_id) : 'Not Registered' ?></p>
-                            </div>
-                        </div>
-                        <div class="stats-item" style="margin-top: 1rem;">
-                            <div class="stats-icon-wrapper" style="background-color: var(--bg-green-100);">
+                             <div class="stats-icon-wrapper" style="background-color: var(--bg-green-100);">
                                 <svg class="w-6 h-6" fill="none" stroke="var(--text-green-500)" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                 </svg>
@@ -411,8 +373,8 @@ $result_logs = mysqli_stmt_get_result($stmt_logs);
                 <div id="error-display" class="error-display hidden"></div>
 
                 <div class="table-container table-responsive">
-                    <h2>Access Log History</h2>
-                    
+                    <h2>Access Log History (Granted)</h2>
+
                     <form method="GET" action="" class="filter-form">
                         <input type="hidden" name="id" value="<?= $user_id ?>">
                         <div>
@@ -438,8 +400,7 @@ $result_logs = mysqli_stmt_get_result($stmt_logs);
                                 <th>Date Time</th>
                                 <th>Card Scanned</th>
                                 <th>Status</th>
-                                <!-- <th>Action</th> -->
-                            </tr>
+                                </tr>
                         </thead>
                         <tbody id="logTableBody">
                             <?php
@@ -448,7 +409,7 @@ $result_logs = mysqli_stmt_get_result($stmt_logs);
                                     $log_id = $row['log_id']; // Assuming you have a log_id primary key
                                     $display_name = (isset($row['first_name']) && isset($row['last_name'])) ? htmlspecialchars($row['first_name'] . ' ' . $row['last_name']) : 'Unknown User';
                                     $timestamp_raw = $row['timestamp'];
-                                    $rfid_scanned = $row['rfid_scanned'] == "" ? "No Card Scanned" : $row['rfid_scanned'];
+                                    $rfid_scanned = $row['rfid_scanned'] == "" ? "No Card Scanned" : htmlspecialchars($row['rfid_scanned']); // Added htmlspecialchars
                                     $access_granted = $row['access_granted']; // 1 for granted, 0 for denied
 
                                     // Format the timestamp to 12-hour format with AM/PM
@@ -469,17 +430,18 @@ $result_logs = mysqli_stmt_get_result($stmt_logs);
                                     }
 
                                     echo <<<HTML
-                                            <tr>
-                                                <td>{$display_name}</td>
-                                                <td>{$timestamp}</td>
-                                                <td>{$rfid_scanned}</td>
-                                                <td><span class="status {$status_class}">{$status_text}</span></td>
-                                            </tr>
-                                        HTML;
+                                        <tr>
+                                            <td>{$display_name}</td>
+                                            <td>{$timestamp}</td>
+                                            <td>{$rfid_scanned}</td>
+                                            <td><span class="status {$status_class}">{$status_text}</span></td>
+                                        </tr>
+                                    HTML;
                                 }
                             } else {
                                 echo '<tr><td colspan="5" style="text-align: center; padding: 1rem;">No access logs found.</td></tr>';
                             }
+                            mysqli_stmt_free_result($stmt_logs); // Free result set
                             mysqli_stmt_close($stmt_logs); // Close the statement for logs
                             mysqli_close($conn); // Close DB connection after fetching all needed data
                             ?>
@@ -515,12 +477,18 @@ $result_logs = mysqli_stmt_get_result($stmt_logs);
                                 } else {
                                     echo '<a href="' . $pagination_url . '&page=' . $i . '">' . $i . '</a>';
                                 }
-                            } elseif (($i == $page - $range - 1) || ($i == $page + $range + 1)) {
-                                // Add ellipsis (...) if needed
-                                echo '<span>...</span>';
+                            } elseif (($i == $page - $range - 1 && $page - $range > 1) || ($i == $page + $range + 1 && $page + $range < $total_pages)) {
+                                // Add ellipsis (...) if needed, ensure we don't add multiple
+                                if (!isset($ellipsis_added)) {
+                                     echo '<span>...</span>';
+                                     $ellipsis_added = true; // Flag to prevent adding multiple ellipses
+                                }
                             }
                         }
+                         // Reset ellipsis flag for the next block if needed
+                         unset($ellipsis_added);
                         ?>
+
 
                         <?php if ($page < $total_pages) : ?>
                             <a href="<?= $pagination_url ?>&page=<?= $page + 1 ?>">Next &raquo;</a>
@@ -540,7 +508,9 @@ $result_logs = mysqli_stmt_get_result($stmt_logs);
             const errorDisplay = document.getElementById('error-display');
             const searchInput = document.getElementById('searchInput');
             const tableBody = document.getElementById('logTableBody');
-            const tableRows = tableBody.getElementsByTagName('tr');
+            // Get initial table rows
+            const tableRows = tableBody ? Array.from(tableBody.getElementsByTagName('tr')) : [];
+
 
             // --- Sidebar Toggle ---
             if (hamburgerButton && sidebar) {
@@ -550,13 +520,12 @@ $result_logs = mysqli_stmt_get_result($stmt_logs);
             }
 
             // --- Client-Side Search/Filter ---
-            if (searchInput && tableBody) {
+            if (searchInput && tableBody && tableRows.length > 0) {
                 searchInput.addEventListener('input', () => {
                     const searchTerm = searchInput.value.toLowerCase().trim();
 
-                    for (let i = 0; i < tableRows.length; i++) {
-                        const row = tableRows[i];
-                        // Check if it's a data row (ignore potential header/footer rows in tbody)
+                    tableRows.forEach(row => {
+                         // Check if it's a data row (ignore potential header/footer rows in tbody)
                         if (row.getElementsByTagName('td').length > 0) {
                             const rowText = row.textContent.toLowerCase();
                             if (rowText.includes(searchTerm)) {
@@ -565,9 +534,14 @@ $result_logs = mysqli_stmt_get_result($stmt_logs);
                                 row.style.display = 'none'; // Hide row
                             }
                         }
-                    }
+                    });
                 });
+            } else if (searchInput) {
+                 // Disable search if no rows are present
+                 searchInput.disabled = true;
+                 searchInput.placeholder = "No logs to search";
             }
+
 
             // --- Helper Functions ---
             function showError(message) {
@@ -587,9 +561,9 @@ $result_logs = mysqli_stmt_get_result($stmt_logs);
             // --- Close sidebar on outside click (small screens) ---
             document.addEventListener('click', (event) => {
                 const isSmallScreen = window.innerWidth < 640;
-                if (isSmallScreen && sidebar.classList.contains('is-open')) {
+                if (isSmallScreen && sidebar && sidebar.classList.contains('is-open')) {
                     const isClickInsideSidebar = sidebar.contains(event.target);
-                    const isClickOnHamburger = hamburgerButton.contains(event.target);
+                    const isClickOnHamburger = hamburgerButton && hamburgerButton.contains(event.target);
                     if (!isClickInsideSidebar && !isClickOnHamburger) {
                         sidebar.classList.remove('is-open');
                     }
@@ -599,20 +573,28 @@ $result_logs = mysqli_stmt_get_result($stmt_logs);
             // --- Initial Display Logic ---
             const loadingIndicator = document.getElementById('loading-indicator');
             const dashboardLayout = document.getElementById('dashboard-layout');
-            if (loadingIndicator) loadingIndicator.classList.add('hidden'); // Hide loading
-            if (dashboardLayout) dashboardLayout.classList.remove('hidden'); // Show dashboard
+            // Use a slight delay to ensure CSS is loaded before showing
+            setTimeout(() => {
+                 if (loadingIndicator) loadingIndicator.classList.add('hidden'); // Hide loading
+                 if (dashboardLayout) dashboardLayout.classList.remove('hidden'); // Show dashboard
+            }, 100);
+
 
             // --- Date validation for the filter form ---
             const filterForm = document.querySelector('.filter-form');
             const startDateInput = document.getElementById('start_date');
             const endDateInput = document.getElementById('end_date');
 
-            if (filterForm) {
+            if (filterForm && startDateInput && endDateInput) {
                 filterForm.addEventListener('submit', (event) => {
                     if (startDateInput.value && endDateInput.value) {
                         const startDate = new Date(startDateInput.value);
                         const endDate = new Date(endDateInput.value);
-                        
+
+                        // Set hours to avoid timezone issues with date comparison
+                        startDate.setHours(0, 0, 0, 0);
+                        endDate.setHours(0, 0, 0, 0);
+
                         if (startDate > endDate) {
                             event.preventDefault();
                             showError('Start date cannot be after end date.');
