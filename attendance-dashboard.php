@@ -28,18 +28,6 @@ if (!$conn) {
     die("Connection failed: " . mysqli_connect_error());
 }
 
-// --- Get User's RFID Card ---
-$card_id = null;
-$sql_card = "SELECT card_id FROM rfidcards WHERE user_id = ?";
-$stmt_card = mysqli_prepare($conn, $sql_card);
-mysqli_stmt_bind_param($stmt_card, "i", $user_id);
-mysqli_stmt_execute($stmt_card);
-$result_card = mysqli_stmt_get_result($stmt_card);
-if ($data_card = mysqli_fetch_assoc($result_card)) {
-    $card_id = $data_card['card_id'];
-}
-mysqli_stmt_close($stmt_card);
-
 // --- Get Filter Dates from GET Request ---
 $filter_start_date = $_GET['start_date'] ?? ''; // Default to empty string if not set
 $filter_end_date = $_GET['end_date'] ?? '';   // Default to empty string if not set
@@ -53,14 +41,16 @@ $limit = 100;
 $page = isset($_GET['page']) && is_numeric($_GET['page']) ? (int)$_GET['page'] : 1;
 $offset = ($page - 1) * $limit;
 
-// --- Build Simplified SQL Query ---
-// This query will show ALL access logs entries, not just the latest per user/day
-$sql_select_count = "SELECT COUNT(*) ";
-$sql_select_data = "SELECT l.*, u.first_name, u.last_name ";
-
-// FIXED: Simplified join without the subquery that was filtering records
-$sql_from_joins = "
+// --- SQL Queries to get the latest log entry for each user ---
+// This approach uses a subquery to find the latest timestamp for each user
+$sql_base = "
     FROM accesslogs l
+    INNER JOIN (
+        SELECT user_id, MAX(timestamp) as latest_time
+        FROM accesslogs
+        WHERE access_granted = 1
+        GROUP BY user_id
+    ) latest ON l.user_id = latest.user_id AND l.timestamp = latest.latest_time
     LEFT JOIN rfidcards r ON l.rfid_scanned = r.card_id
     LEFT JOIN users u ON r.user_id = u.user_id
 ";
@@ -73,13 +63,13 @@ $param_types = "";
 if (!empty($filter_start_date)) {
     $where_clauses[] = "DATE(l.timestamp) >= ?";
     $params[] = $filter_start_date;
-    $param_types .= "s"; // 's' for string date
+    $param_types .= "s";
 }
 
 if (!empty($filter_end_date)) {
     $where_clauses[] = "DATE(l.timestamp) <= ?";
     $params[] = $filter_end_date;
-    $param_types .= "s"; // 's' for string date
+    $param_types .= "s";
 }
 
 $sql_where = "";
@@ -87,8 +77,8 @@ if (!empty($where_clauses)) {
     $sql_where = " WHERE " . implode(" AND ", $where_clauses);
 }
 
-// --- Calculate Total Records WITH Filters ---
-$sql_total = $sql_select_count . $sql_from_joins . $sql_where;
+// --- Calculate Total Records ---
+$sql_total = "SELECT COUNT(*) " . $sql_base . $sql_where;
 $stmt_total = mysqli_prepare($conn, $sql_total);
 
 if (!$stmt_total) {
@@ -106,8 +96,25 @@ $total_records = mysqli_fetch_array($result_total)[0];
 $total_pages = ceil($total_records / $limit);
 mysqli_stmt_close($stmt_total);
 
-// --- Fetch Data for the Current Page WITH Filters ---
-$sql_logs = $sql_select_data . $sql_from_joins . $sql_where . " ORDER BY l.timestamp DESC LIMIT ? OFFSET ?";
+// --- Fetch Latest Log Data for Each User ---
+$sql_logs = "
+    SELECT 
+        l.log_id, 
+        l.user_id,
+        l.face_recognized,
+        l.rfid_scanned,
+        l.access_granted,
+        l.timestamp,
+        l.confidence_score,
+        l.device_id,
+        u.first_name,
+        u.last_name,
+        u.email,
+        u.role
+    " . $sql_base . $sql_where . " 
+    ORDER BY l.timestamp DESC 
+    LIMIT ? OFFSET ?";
+
 $stmt_logs = mysqli_prepare($conn, $sql_logs);
 
 if (!$stmt_logs) {
@@ -115,16 +122,16 @@ if (!$stmt_logs) {
 }
 
 // Combine date params with pagination params
-$log_params = $params; // Start with date params
-$log_param_types = $param_types; // Start with date param types
+$log_params = $params;
+$log_param_types = $param_types;
 
-$log_params[] = $limit;      // Add limit
-$log_param_types .= "i";     // Add type for limit
+$log_params[] = $limit;
+$log_param_types .= "i";
 
-$log_params[] = $offset;     // Add offset
-$log_param_types .= "i";     // Add type for offset
+$log_params[] = $offset;
+$log_param_types .= "i";
 
-// Bind parameters if any exist (dates + limit + offset)
+// Bind parameters
 if (!empty($log_param_types)) {
     mysqli_stmt_bind_param($stmt_logs, $log_param_types, ...$log_params);
 }
@@ -133,11 +140,9 @@ mysqli_stmt_execute($stmt_logs);
 $result_logs = mysqli_stmt_get_result($stmt_logs);
 
 // --- Build Base URL for Pagination ---
-// Include existing filter parameters
 $query_params = [];
 if (!empty($filter_start_date)) $query_params['start_date'] = $filter_start_date;
 if (!empty($filter_end_date)) $query_params['end_date'] = $filter_end_date;
-// Keep other potential future parameters here if needed
 $base_pagination_url = '?' . http_build_query($query_params);
 
 // The rest of your page content and HTML rendering would go here
