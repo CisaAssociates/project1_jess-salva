@@ -58,15 +58,17 @@ $sql_select_data = "SELECT l.*, u.first_name, u.last_name ";
 
 $sql_from_joins = "
     FROM accesslogs l
-    INNER JOIN (
+    LEFT JOIN rfidcards r ON l.rfid_scanned = r.card_id
+    LEFT JOIN users u ON r.user_id = u.user_id
+    JOIN (
         SELECT user_id, MAX(timestamp) AS latest_time
         FROM accesslogs
-        WHERE access_granted = 1
         GROUP BY user_id
-    ) latest_log ON l.user_id = latest_log.user_id AND l.timestamp = latest_log.latest_time
-    LEFT JOIN rfidcards r ON l.rfid_scanned = r.card_id
-    LEFT JOIN users u ON l.user_id = u.user_id
+    ) recent_logs
+      ON l.user_id = recent_logs.user_id
+     AND l.timestamp = recent_logs.latest_time
 ";
+
 
 // --- Build Dynamic WHERE Clause & Parameters ---
 $where_clauses = ["u.user_id IS NOT NULL", "l.access_granted = 1"]; // Base conditions
