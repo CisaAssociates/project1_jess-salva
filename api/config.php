@@ -18,9 +18,9 @@ error_reporting(E_ALL);
 // --- Database Configuration ---
 // Use getenv for consistency or define directly. Best practice is to keep credentials outside code.
 define('DB_HOST', getenv('DB_HOST') ?: 'localhost');
-define('DB_USER', getenv('DB_USER') ?: 'root');
-define('DB_PASSWORD', getenv('DB_PASSWORD') ?: '');
-define('DB_NAME', getenv('DB_NAME') ?: 'facial_recognition_system');
+define('DB_USER', getenv('DB_USER') ?: 'u347279731_jess_salva');
+define('DB_PASSWORD', getenv('DB_PASSWORD') ?: 'Project1_jess_salva');
+define('DB_NAME', getenv('DB_NAME') ?: 'u347279731_jess_salva_db');
 define('DB_PORT', getenv('DB_PORT') ?: 3306);
 define('DB_CHARSET', 'utf8mb4');
 
