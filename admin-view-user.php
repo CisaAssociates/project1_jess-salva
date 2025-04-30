@@ -93,6 +93,121 @@ $result_logs = mysqli_stmt_get_result($stmt_logs);
     <title>Dashboard - Access Logs</title>
     <link rel="stylesheet" href="./styles/style.css">
     <link rel="stylesheet" href="./styles/user-dashboard.css">
+    <style>
+        /* Add styles for pagination if they don't exist in admin-dashboard.css */
+        .pagination {
+            margin-top: 1.5rem;
+            text-align: center;
+        }
+        .pagination a,
+        .pagination span {
+            display: inline-block;
+            padding: 0.5rem 0.8rem;
+            margin: 0 0.2rem;
+            border: 1px solid #ddd;
+            color: #337ab7;
+            text-decoration: none;
+            border-radius: 4px;
+            background-color: #fff;
+        }
+        .pagination a:hover {
+            background-color: #eee;
+        }
+        .pagination .current-page {
+            font-weight: bold;
+            color: #fff;
+            background-color: #337ab7;
+            border-color: #337ab7;
+            cursor: default;
+        }
+        .pagination .disabled {
+            color: #777;
+            cursor: default;
+            background-color: #f9f9f9;
+            border-color: #ddd;
+        }
+        /* Style for status spans */
+        .status {
+            padding: 0.2em 0.6em;
+            border-radius: 0.25em;
+            font-size: 0.85em;
+            font-weight: bold;
+            color: #fff;
+            white-space: nowrap;
+        }
+        .status-granted {
+            background-color: #5cb85c; /* Green */
+        }
+        .status-denied {
+            background-color: #d9534f; /* Red */
+        }
+        .status-unknown {
+            background-color: #777; /* Gray */
+        }
+        .action-links a {
+            margin-right: 0.5rem;
+            color: #337ab7;
+            text-decoration: none;
+        }
+        .action-links a:hover {
+            text-decoration: underline;
+        }
+        .action-links .delete-link {
+            color: #d9534f; /* Red */
+        }
+        .action-links .delete-link:hover {
+            color: #c9302c;
+        }
+        /* Styles for Filter Form */
+        .filter-form {
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background-color: #f9f9f9;
+            border: 1px solid #eee;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap; /* Allow wrapping on smaller screens */
+        }
+        .filter-form label {
+            font-weight: bold;
+            margin-right: 0.5rem;
+        }
+        .filter-form input[type="date"] {
+            padding: 0.4rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .filter-form button {
+            padding: 0.5rem 1rem;
+            background-color: #337ab7;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .filter-form button:hover {
+            background-color: #286090;
+        }
+         .filter-form .clear-filter-link {
+             padding: 0.5rem 1rem;
+             background-color: #f0ad4e;
+             color: white;
+             border: none;
+             border-radius: 4px;
+             cursor: pointer;
+             text-decoration: none;
+             font-size: 0.9em;
+             display: inline-block;
+             text-align: center;
+             line-height: normal;
+        }
+        .filter-form .clear-filter-link:hover {
+             background-color: #ec971f;
+        }
+    </style>
 </head>
 
 <body>
