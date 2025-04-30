@@ -322,6 +322,7 @@ $result_logs = mysqli_stmt_get_result($stmt_logs);
                     <h2>Access Log History</h2>
                     
                     <form method="GET" action="admin-view-user.php" class="filter-form">
+                        <input type="hidden" name="id" value="<?= $user_id?>">
                         <div>
                             <label for="start_date">From:</label>
                             <input type="date" id="start_date" name="start_date" value="<?= htmlspecialchars($filter_start_date) ?>">
