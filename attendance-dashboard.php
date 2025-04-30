@@ -8,15 +8,18 @@ if (!isset($_SESSION['user_data'])) {
     exit();
 }
 
-foreach ($_SESSION['user_data'] as $key => $value) {
-    $$key = $value; // Extracts user_id, email, first_name, last_name, etc.
-}
+// Safer way to extract session variables
+$user_id = $_SESSION['user_data']['user_id'] ?? null;
+$email = $_SESSION['user_data']['email'] ?? null;
+$first_name = $_SESSION['user_data']['first_name'] ?? null;
+$last_name = $_SESSION['user_data']['last_name'] ?? null;
+$role = $_SESSION['user_data']['role'] ?? null;
 
+// Check if user has admin role
 if($role !== "Admin"){
-    header("Location: index.php"); // Or your login page
+    header("Location: index.php"); // Redirect non-admin users
     exit();
 }
-
 
 $conn = mysqli_connect($host, $user, $pass, $db);
 
@@ -25,7 +28,7 @@ if (!$conn) {
     die("Connection failed: " . mysqli_connect_error());
 }
 
-// --- Get User's RFID Card (remains the same) ---
+// --- Get User's RFID Card ---
 $card_id = null;
 $sql_card = "SELECT card_id FROM rfidcards WHERE user_id = ?";
 $stmt_card = mysqli_prepare($conn, $sql_card);
@@ -42,36 +45,28 @@ $filter_start_date = $_GET['start_date'] ?? ''; // Default to empty string if no
 $filter_end_date = $_GET['end_date'] ?? '';   // Default to empty string if not set
 
 // Basic validation (ensure they look like dates if provided)
-// More robust validation could be added here (e.g., check format, ensure start <= end)
 $filter_start_date = (preg_match("/^\d{4}-\d{2}-\d{2}$/", $filter_start_date)) ? $filter_start_date : '';
 $filter_end_date = (preg_match("/^\d{4}-\d{2}-\d{2}$/", $filter_end_date)) ? $filter_end_date : '';
 
-
-// --- Pagination Logic (remains the same) ---
+// --- Pagination Logic ---
 $limit = 100;
 $page = isset($_GET['page']) && is_numeric($_GET['page']) ? (int)$_GET['page'] : 1;
 $offset = ($page - 1) * $limit;
 
-// --- Build Base SQL parts ---
+// --- Build Simplified SQL Query ---
+// This query will show ALL access logs entries, not just the latest per user/day
 $sql_select_count = "SELECT COUNT(*) ";
 $sql_select_data = "SELECT l.*, u.first_name, u.last_name ";
 
+// FIXED: Simplified join without the subquery that was filtering records
 $sql_from_joins = "
     FROM accesslogs l
     LEFT JOIN rfidcards r ON l.rfid_scanned = r.card_id
     LEFT JOIN users u ON r.user_id = u.user_id
-    JOIN (
-        SELECT user_id, DATE(timestamp) AS log_date, MAX(timestamp) AS latest_time
-        FROM accesslogs
-        GROUP BY user_id, DATE(timestamp)
-    ) recent_logs
-      ON l.user_id = recent_logs.user_id -- Check if l.user_id exists in accesslogs
-     AND DATE(l.timestamp) = recent_logs.log_date
-     AND l.timestamp = recent_logs.latest_time
 ";
 
 // --- Build Dynamic WHERE Clause & Parameters ---
-$where_clauses = ["u.user_id IS NOT NULL", "l.access_granted = 1"]; // Base conditions
+$where_clauses = ["l.access_granted = 1"]; // Base condition - only show granted access
 $params = [];
 $param_types = "";
 
@@ -111,7 +106,6 @@ $total_records = mysqli_fetch_array($result_total)[0];
 $total_pages = ceil($total_records / $limit);
 mysqli_stmt_close($stmt_total);
 
-
 // --- Fetch Data for the Current Page WITH Filters ---
 $sql_logs = $sql_select_data . $sql_from_joins . $sql_where . " ORDER BY l.timestamp DESC LIMIT ? OFFSET ?";
 $stmt_logs = mysqli_prepare($conn, $sql_logs);
@@ -146,7 +140,7 @@ if (!empty($filter_end_date)) $query_params['end_date'] = $filter_end_date;
 // Keep other potential future parameters here if needed
 $base_pagination_url = '?' . http_build_query($query_params);
 
-
+// The rest of your page content and HTML rendering would go here
 ?>
 <!DOCTYPE html>
 <html lang="en">
