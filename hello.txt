@@ -1,0 +1,100 @@
+https://drive.google.com/drive/folders/1DEV_i5VRbX3LLycu5AF8d7QbR6YNv3X1
+
+CREATE TABLE `faceencodings` (
+  `encoding_id` int NOT NULL,
+  `user_id` int NOT NULL,
+  `face_encoding` blob,
+  `face_image_path` varchar(255) NOT NULL,
+  `quality_score` float DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+
+CREATE TABLE `users` (
+  `user_id` int NOT NULL,
+  `first_name` varchar(50) NOT NULL,
+  `last_name` varchar(50) NOT NULL,
+  `email` varchar(100) DEFAULT NULL,
+  `password` varchar(20) DEFAULT NULL,
+  `role` varchar(50) DEFAULT NULL,
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+
+
+
+DELIMITER $$
+
+-- Drop existing procedures if they exist
+DROP PROCEDURE IF EXISTS AddNewUser $$
+DROP PROCEDURE IF EXISTS LogAccessAttempt $$
+DROP PROCEDURE IF EXISTS RegisterRFIDCard $$
+
+-- Procedures
+CREATE DEFINER=`root`@`localhost` PROCEDURE AddNewUser (
+    IN p_first_name VARCHAR(50), 
+    IN p_last_name VARCHAR(50), 
+    IN p_email VARCHAR(100), 
+    IN p_phone VARCHAR(20), 
+    IN p_role VARCHAR(50), 
+    IN p_face_image_path VARCHAR(255)
+)
+BEGIN
+    DECLARE new_user_id INT;
+    
+    -- Insert the user
+    INSERT INTO users (first_name, last_name, email, phone, role)
+    VALUES (p_first_name, p_last_name, p_email, p_phone, p_role);
+    
+    -- Get the new user ID
+    SET new_user_id = LAST_INSERT_ID();
+    
+    -- Return the new user ID (face encoding needs to be added via application code)
+    SELECT new_user_id AS user_id, p_face_image_path AS face_image_path;
+END$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE LogAccessAttempt (
+    IN p_user_id INT, 
+    IN p_face_recognized BOOLEAN, 
+    IN p_rfid_scanned VARCHAR(50), 
+    IN p_access_granted BOOLEAN, 
+    IN p_confidence_score FLOAT, 
+    IN p_device_id VARCHAR(50)
+)
+BEGIN
+    INSERT INTO accesslogs (user_id, face_recognized, rfid_scanned, access_granted, confidence_score, device_id)
+    VALUES (p_user_id, p_face_recognized, p_rfid_scanned, p_access_granted, p_confidence_score, p_device_id);
+END$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE RegisterRFIDCard (
+    IN p_card_id VARCHAR(50), 
+    IN p_user_id INT
+)
+BEGIN
+    -- Check if card already exists
+    DECLARE card_exists INT;
+    SELECT COUNT(*) INTO card_exists FROM rfidcards WHERE card_id = p_card_id;
+    
+    IF card_exists > 0 THEN
+        -- Update existing card
+        UPDATE rfidcards 
+        SET user_id = p_user_id, 
+            is_active = TRUE,
+            revoked_at = NULL
+        WHERE card_id = p_card_id;
+    ELSE
+        -- Insert new card
+        INSERT INTO rfidcards (card_id, user_id)
+        VALUES (p_card_id, p_user_id);
+    END IF;
+    
+    -- Return the updated card info
+    SELECT r.card_id, CONCAT(u.first_name, ' ', u.last_name) AS user_name, r.is_active
+    FROM rfidcards r
+    JOIN users u ON r.user_id = u.user_id
+    WHERE r.card_id = p_card_id;
+END$$
+
+DELIMITER ;

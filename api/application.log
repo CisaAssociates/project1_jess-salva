@@ -1,0 +1,62 @@
+[2025-04-27 07:44:58] WARNING: RFID verification skipped: Invalid card ID ('ANYCARDID') or user name ('Unknown').
+[2025-04-27 07:46:10] INFO: Logging attempt: User=Unknown(ID:NULL), FaceRec=T, RFID=NULL, Granted=F, Conf=0, Device=device001
+[2025-04-27 07:46:17] INFO: Logging attempt: User=Unknown(ID:NULL), FaceRec=T, RFID=NULL, Granted=F, Conf=0, Device=device001
+[2025-04-27 07:46:55] INFO: Logging attempt: User=Unknown(ID:NULL), FaceRec=T, RFID=NULL, Granted=F, Conf=0, Device=device001
+[2025-04-27 07:47:09] INFO: Logging attempt: User=Ruby Tomon(ID:105), FaceRec=T, RFID=NULL, Granted=F, Conf=62.615048298445, Device=device001
+[2025-04-27 07:47:23] INFO: Logging attempt: User=Ruby Tomon(ID:105), FaceRec=T, RFID=NULL, Granted=F, Conf=66.587978411443, Device=device001
+[2025-04-27 07:47:40] INFO: Logging attempt: User=Jessica Tomon(ID:106), FaceRec=T, RFID=NULL, Granted=F, Conf=9.3189052209765, Device=device001
+[2025-04-27 07:47:54] INFO: Logging attempt: User=Jessica Tomon(ID:106), FaceRec=T, RFID=NULL, Granted=F, Conf=53.814929395992, Device=device001
+[2025-04-27 07:49:06] WARNING: RFID verification skipped: Invalid card ID ('ANYCARDID') or user name ('Unknown').
+[2025-04-27 07:52:21] WARNING: RFID verification skipped: Invalid card ID ('ANYCARDID') or user name ('Unknown').
+[2025-04-27 07:52:35] INFO: Logging attempt: User=Unknown(ID:NULL), FaceRec=T, RFID=NULL, Granted=F, Conf=0, Device=device001
+[2025-04-27 07:52:43] INFO: Logging attempt: User=Unknown(ID:NULL), FaceRec=T, RFID=NULL, Granted=F, Conf=0, Device=device001
+[2025-04-27 07:52:50] INFO: Logging attempt: User=Unknown(ID:NULL), FaceRec=T, RFID=NULL, Granted=F, Conf=0, Device=device001
+[2025-04-27 07:52:57] INFO: Logging attempt: User=Unknown(ID:NULL), FaceRec=T, RFID=NULL, Granted=F, Conf=0, Device=device001
+[2025-04-27 07:53:04] INFO: Logging attempt: User=Unknown(ID:NULL), FaceRec=T, RFID=NULL, Granted=F, Conf=0, Device=device001
+[2025-04-27 07:53:12] INFO: Logging attempt: User=Unknown(ID:NULL), FaceRec=T, RFID=NULL, Granted=F, Conf=0, Device=device001
+[2025-04-27 07:53:19] INFO: Logging attempt: User=Unknown(ID:NULL), FaceRec=T, RFID=NULL, Granted=F, Conf=0, Device=device001
+[2025-04-27 07:53:26] INFO: Logging attempt: User=Unknown(ID:NULL), FaceRec=T, RFID=NULL, Granted=F, Conf=0, Device=device001
+[2025-04-27 07:53:33] INFO: Logging attempt: User=Unknown(ID:NULL), FaceRec=T, RFID=NULL, Granted=F, Conf=0, Device=device001
+[2025-04-27 08:01:54] WARNING: RFID verification skipped: Invalid card ID ('ANYCARDID') or user name ('Unknown').
+[2025-04-27 08:02:11] INFO: Logging attempt: User=Unknown(ID:NULL), FaceRec=F, RFID=NULL, Granted=F, Conf=0, Device=device001
+[2025-04-27 08:02:18] INFO: Logging attempt: User=Unknown(ID:NULL), FaceRec=F, RFID=NULL, Granted=F, Conf=0, Device=device001
+[2025-04-27 08:02:25] INFO: Logging attempt: User=Unknown(ID:NULL), FaceRec=F, RFID=NULL, Granted=F, Conf=0, Device=device001
+[2025-04-27 08:02:32] INFO: Logging attempt: User=Unknown(ID:NULL), FaceRec=F, RFID=NULL, Granted=F, Conf=0, Device=device001
+[2025-04-27 08:02:39] INFO: Logging attempt: User=Unknown(ID:NULL), FaceRec=F, RFID=NULL, Granted=F, Conf=0, Device=device001
+[2025-04-27 08:02:46] INFO: Logging attempt: User=Unknown(ID:NULL), FaceRec=F, RFID=NULL, Granted=F, Conf=0, Device=device001
+[2025-04-27 08:02:54] INFO: Logging attempt: User=Unknown(ID:NULL), FaceRec=F, RFID=NULL, Granted=F, Conf=0, Device=device001
+[2025-04-27 08:03:01] INFO: Logging attempt: User=Unknown(ID:NULL), FaceRec=F, RFID=NULL, Granted=F, Conf=0, Device=device001
+[2025-04-27 08:20:24] WARNING: RFID verification skipped: Invalid card ID ('ANYCARDID') or user name ('Unknown').
+[2025-04-27 08:20:45] INFO: Logging attempt: User=Unknown(ID:NULL), FaceRec=F, RFID=NULL, Granted=F, Conf=0, Device=device001
+[2025-04-27 08:20:52] INFO: Logging attempt: User=Unknown(ID:NULL), FaceRec=F, RFID=NULL, Granted=F, Conf=0, Device=device001
+[2025-04-27 08:21:00] INFO: Logging attempt: User=Unknown(ID:NULL), FaceRec=F, RFID=NULL, Granted=F, Conf=0, Device=device001
+[2025-04-27 08:21:07] INFO: Logging attempt: User=Unknown(ID:NULL), FaceRec=F, RFID=NULL, Granted=F, Conf=0, Device=device001
+[2025-04-27 08:21:14] INFO: Logging attempt: User=Unknown(ID:NULL), FaceRec=F, RFID=NULL, Granted=F, Conf=0, Device=device001
+[2025-04-27 08:21:21] INFO: Logging attempt: User=Unknown(ID:NULL), FaceRec=F, RFID=NULL, Granted=F, Conf=0, Device=device001
+[2025-04-27 08:21:39] INFO: Logging attempt: User=Unknown(ID:NULL), FaceRec=F, RFID=NULL, Granted=F, Conf=0, Device=device001
+[2025-04-27 08:21:46] INFO: Logging attempt: User=Unknown(ID:NULL), FaceRec=F, RFID=NULL, Granted=F, Conf=0, Device=device001
+[2025-04-27 08:21:53] INFO: Logging attempt: User=Unknown(ID:NULL), FaceRec=F, RFID=NULL, Granted=F, Conf=0, Device=device001
+[2025-04-30 03:23:53] WARNING: RFID verification skipped: Invalid card ID ('ANYCARDID') or user name ('Unknown').
+[2025-04-30 03:24:23] INFO: Logging attempt: User=Joshua Luis Alboleras(ID:38), FaceRec=T, RFID=NULL, Granted=F, Conf=27.851877870179, Device=device001
+[2025-04-30 03:24:37] INFO: Logging attempt: User=Joshua Luis Alboleras(ID:38), FaceRec=T, RFID=NULL, Granted=F, Conf=25.273914644396, Device=device001
+[2025-04-30 03:25:10] WARNING: RFID verification skipped: Invalid card ID ('ANYCARDID') or user name ('Unknown').
+[2025-04-30 03:30:42] DEBUG: DB Check: User ID 38 has 1 active card(s).
+[2025-04-30 03:30:42] INFO: DB check: Card '621402' NO MATCH for active user 'Joshua Luis Alboleras'.
+[2025-04-30 03:30:42] INFO: Logging attempt: User=Joshua Luis Alboleras(ID:38), FaceRec=T, RFID=621402, Granted=F, Conf=17.928474916898, Device=device001
+[2025-04-30 03:30:51] DEBUG: DB Check: User ID 38 has 1 active card(s).
+[2025-04-30 03:30:51] INFO: DB check: Card '3b687e4' NO MATCH for active user 'Joshua Luis Alboleras'.
+[2025-04-30 03:30:51] INFO: Logging attempt: User=Joshua Luis Alboleras(ID:38), FaceRec=T, RFID=3b687e4, Granted=F, Conf=25.52560578824, Device=device001
+[2025-04-30 03:31:15] DEBUG: DB Check: User ID 38 has 1 active card(s).
+[2025-04-30 03:31:15] INFO: DB check: Card '4c5eea7' NO MATCH for active user 'Joshua Luis Alboleras'.
+[2025-04-30 03:31:15] INFO: Logging attempt: User=Joshua Luis Alboleras(ID:38), FaceRec=T, RFID=4c5eea7, Granted=F, Conf=12.491855404364, Device=device001
+[2025-04-30 03:31:22] DEBUG: DB Check: User ID 38 has 1 active card(s).
+[2025-04-30 03:31:22] INFO: DB check: Card '8c86c11' NO MATCH for active user 'Joshua Luis Alboleras'.
+[2025-04-30 03:31:22] INFO: Logging attempt: User=Joshua Luis Alboleras(ID:38), FaceRec=T, RFID=8c86c11, Granted=F, Conf=28.997085770871, Device=device001
+[2025-04-30 03:32:00] INFO: Logging attempt: User=Unknown(ID:NULL), FaceRec=F, RFID=NULL, Granted=F, Conf=0, Device=device001
+[2025-04-30 03:32:07] INFO: Logging attempt: User=Unknown(ID:NULL), FaceRec=F, RFID=NULL, Granted=F, Conf=0, Device=device001
+[2025-04-30 03:32:14] INFO: Logging attempt: User=Unknown(ID:NULL), FaceRec=F, RFID=NULL, Granted=F, Conf=0, Device=device001
+[2025-04-30 03:32:21] DEBUG: DB Check: User ID 106 has no active cards.
+[2025-04-30 03:32:22] DEBUG: DB Check: Card ID 4c5eea7 is not active for another user.
+[2025-04-30 03:32:22] INFO: Calling RegisterRFIDCard procedure for Card: 4c5eea7, User ID: 106
+[2025-04-30 03:32:22] INFO: Verification successful for card 4c5eea7.
+[2025-04-30 03:32:22] INFO: Logging attempt: User=Jessica Tomon(ID:106), FaceRec=T, RFID=4c5eea7, Granted=T, Conf=60.716286153149, Device=device001

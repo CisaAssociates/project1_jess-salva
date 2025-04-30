@@ -1,0 +1,215 @@
+.table-container {
+    overflow-x: auto; /* Enable horizontal scrolling for small screens */
+}
+
+.table-responsive table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table-responsive th,
+.table-responsive td {
+    padding: 0.8rem;
+    border: 1px solid #ddd;
+    text-align: left;
+    white-space: nowrap; /* Prevent text from wrapping, force scrolling */
+}
+
+.table-responsive th {
+    background-color: white;
+    font-weight: 400;
+}
+
+/* Style for status column */
+.table-responsive .status-active {
+    color: green;
+    font-weight: bold;
+}
+
+.table-responsive .status-inactive {
+    color: red;
+    font-weight: bold;
+}
+
+.table-container .action-links a {
+    margin-right: 0.5rem;
+    text-decoration: none;
+    color: #007bff; /* Primary link color */
+    font-size: 0.9rem;
+}
+
+.table-container .action-links a:hover {
+    text-decoration: underline;
+}
+
+.table-container .delete-link {
+    color: #dc3545; /* Danger color for delete */
+}
+
+/* Style for profile pictures within table cells (default/larger screens) */
+td.profile-picture {
+    width: 50px; /* Adjust as needed. This is *important* */
+    text-align: center; /* Center the image in the cell */
+}
+
+td.profile-picture img {
+    width: 100%; /* Make image fill the cell's width */
+    height: auto; /* Maintain aspect ratio */
+    max-width: 50px; /* Ensure image doesn't exceed the cell's width */
+    border-radius: 50%; /* Make it round */
+    object-fit: cover; /* Ensure image fills the circle, cropping if necessary */
+    border: 2px solid #888;
+    cursor: pointer;
+    transition: transform 0.2s ease-in-out;
+}
+
+td.profile-picture img:hover {
+   transform: scale(1.1);
+}
+
+
+@media (max-width: 800px) {
+    .table-responsive table thead {
+        display: none; /* Hide the table header */
+    }
+
+    .table-responsive table tr {
+        display: block;
+        margin-bottom: 1rem;
+        border: 1px solid #ddd;
+    }
+
+    .table-responsive table td {
+        display: block;
+        text-align: right;
+        padding-left: 50%;
+        position: relative;
+        border-bottom: 1px solid #eee;
+        white-space: normal; /* Allow text wrapping in mobile layout */
+    }
+
+    .table-responsive table td::before {
+        content: attr(data-label);
+        position: absolute;
+        left: 0;
+        padding-left: 0.8rem;
+        font-weight: bold;
+        text-align: left;
+        width: 45%; /* Give the label some space */
+        box-sizing: border-box; /* Include padding in width */
+    }
+
+    /* Apply data-labels - Ensure these match your table structure */
+    .table-responsive table td:nth-child(1)::before { content: "ID"; }
+    .table-responsive table td:nth-child(2)::before { content: "First Name"; }
+    .table-responsive table td:nth-child(3)::before { content: "Last Name"; }
+    .table-responsive table td:nth-child(4)::before { content: "Email"; }
+    .table-responsive table td:nth-child(5)::before { content: "Role"; }
+    .table-responsive table td:nth-child(6)::before { content: "Status"; }
+    .table-responsive table td:nth-child(7)::before { content: "Created At"; }
+    .table-responsive table td:nth-child(8)::before { content: "Profile"; } /* Label for the profile column */
+    .table-responsive table td:nth-child(9)::before { content: "Actions"; }
+
+
+    .table-responsive .action-links {
+        text-align: right;
+        /* Adjust padding or margin if needed for actions row */
+    }
+
+     /* Ensure action links are displayed correctly */
+    .table-responsive table td.action-links {
+         padding-top: 0.8rem; /* Add padding back to the top if needed */
+         padding-bottom: 0.8rem; /* Add padding back to the bottom if needed */
+         border-bottom: none; /* Remove bottom border if it's the last item */
+    }
+
+    .table-responsive .action-links a {
+        display: inline-block;
+        margin-left: 0.5rem; /* Adjust margin for mobile layout */
+        margin-right: 0; /* Remove right margin if adjusting left */
+        margin-bottom: 0.3rem;
+    }
+
+
+    /* --- Styles specifically for the profile picture column on mobile --- */
+    td.profile-picture {
+        width: 100%; /* Ensure the profile picture column spans the whole width */
+        text-align: center; /* Center the profile image */
+        padding: 1rem 0; /* Add some vertical padding - adjust as needed */
+        display: block; /* Make it take the full block */
+        border-bottom: 1px solid #eee; /* Ensure it still has a bottom border */
+        /* Adjust padding-top to make space for the label if needed */
+        padding-top: 2rem; /* Example: increase top padding to make space for the label */
+    }
+
+    td.profile-picture img {
+        width: 80%; /* Adjust the image width to ensure it's responsive */
+        max-width: 50px; /* Optional: Set a max width so the image doesn't get too large on wider mobile screens */
+        height: auto; /* Keep the image aspect ratio */
+        border-radius: 50%; /* Keep the image round */
+        object-fit: cover; /* Crop the image to fit the circle */
+        border: 2px solid #888; /* Optional border */
+        cursor: pointer;
+        transition: transform 0.2s ease-in-out;
+    }
+
+    td.profile-picture img:hover {
+        transform: scale(1.1); /* Zoom the image on hover */
+    }
+
+     /* The rule below is REMOVED to make the label visible again */
+     /* td.profile-picture::before { display: none; } */
+
+    /* You might want to adjust the position/style of the label for the image */
+    td.profile-picture::before {
+         /* The default styles should apply, but you can override if needed */
+         /* Example: Change color or font-size specifically for this label */
+         /* color: blue; */
+         /* font-size: 1rem; */
+         /* You might also adjust its top position if needed, but be careful */
+         /* top: 0.5rem; */
+    }
+
+    /* --- End of profile picture styles on mobile --- */
+}
+
+
+.table-controls {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    align-items: center; /* Vertically align items */
+}
+
+.table-container .pagination {
+    margin-top: 1rem;
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    font-size: 0.9rem;
+    color: #777;
+}
+
+.table-container .pagination a,
+.table-container .pagination span {
+    padding: 0.4rem 0.7rem;
+    border-radius: 4px;
+    text-decoration: none;
+    color: #555;
+    border: 1px solid #ddd;
+}
+
+.table-container .pagination a:hover {
+    background-color: #eee;
+}
+
+.table-container .pagination .current-page {
+    background-color: #007bff;
+    color: white;
+    border-color: #007bff;
+}
+
+.table-container .pagination .disabled {
+    color: #ccc;
+    border-color: #eee;
+}

@@ -1,0 +1,168 @@
+.table-container {
+    overflow-x: auto;
+}
+
+.table-container h2 {
+    font-size: 1.5rem;
+    font-weight: normal;
+    color: #333;
+    margin-bottom: 1rem;
+}
+
+.table-controls {
+    margin-bottom: 1.5rem;
+}
+
+.search-input {
+    padding: 0.6rem 1rem;
+    border: 1px solid #ddd; /* Lighter border */
+    border-radius: 4px;
+    font-size: 0.9rem;
+    width: 100%;
+    max-width: 300px;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: #aaa; /* Slightly darker focus border */
+    box-shadow: 0 0 3px rgba(0, 0, 0, 0.05); /* Even lighter shadow */
+}
+
+.table-responsive table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table-responsive th,
+.table-responsive td {
+    padding: 0.7rem 0.9rem; /* Slightly reduced padding */
+    border-bottom: 1px solid #eee; /* Very light bottom border */
+    text-align: left;
+    white-space: nowrap;
+}
+
+.table-responsive th {
+    background-color: #f8f8f8; /* Very light background */
+    font-weight: normal;
+    color: #555; /* Darker header text */
+}
+
+.table-responsive tbody tr:hover {
+    background-color: #f2f2f2; /* Subtle hover */
+}
+
+.table-responsive .status {
+    display: inline-block;
+    padding: 0.25rem 0.5rem; /* Smaller padding for status */
+    border-radius: 4px;
+    font-size: 0.8rem;
+}
+
+.table-responsive .status-granted {
+    background-color: #e6ffe6;
+    color: #2e8b57;
+}
+
+.table-responsive .status-denied {
+    background-color: #ffe6e6;
+    color: #b22222;
+}
+
+.table-responsive .status-unknown {
+    background-color: #f0f0f0;
+    color: #777;
+}
+
+.table-responsive .action-links a {
+    margin-right: 0.4rem; /* Slightly less margin */
+    text-decoration: none;
+    color: #007bff;
+    font-size: 0.85rem; /* Slightly smaller font */
+}
+
+.table-responsive .action-links a:hover {
+    text-decoration: underline;
+}
+
+.table-responsive .delete-link {
+    color: #dc3545;
+}
+
+.pagination {
+    margin-top: 1rem;
+    display: flex;
+    gap: 0.4rem; /* Less gap in pagination */
+    align-items: center;
+    font-size: 0.85rem; /* Smaller pagination font */
+    color: #777;
+}
+
+.pagination a,
+.pagination span {
+    padding: 0.3rem 0.6rem; /* Smaller pagination padding */
+    border-radius: 4px;
+    text-decoration: none;
+    color: #555;
+    border: 1px solid #ddd;
+}
+
+.pagination a:hover {
+    background-color: #eee;
+}
+
+.pagination .current-page {
+    background-color: #007bff;
+    color: white;
+    border-color: #007bff;
+}
+
+.pagination .disabled {
+    color: #ccc;
+    border-color: #eee;
+}
+
+/* Responsive adjustments (similar to before, but with table-responsive class) */
+@media (max-width: 800px) {
+    .table-responsive table thead {
+        display: none;
+    }
+
+    .table-responsive table tr {
+        display: block;
+        margin-bottom: 1rem;
+        border: 1px solid #ddd;
+    }
+
+    .table-responsive table td {
+        display: block;
+        text-align: right;
+        padding-left: 50%;
+        position: relative;
+        border-bottom: 1px solid #eee;
+    }
+
+    .table-responsive table td::before {
+        content: attr(data-label);
+        position: absolute;
+        left: 0;
+        padding-left: 0.8rem;
+        font-weight: bold;
+        text-align: left;
+        color: #333;
+    }
+
+    .table-responsive table td:nth-child(1)::before { content: "Name"; }
+    .table-responsive table td:nth-child(2)::before { content: "Date Time"; }
+    .table-responsive table td:nth-child(3)::before { content: "Card Scanned"; }
+    .table-responsive table td:nth-child(4)::before { content: "Status"; }
+    .table-responsive table td:nth-child(5)::before { content: "Action"; }
+
+    .table-responsive .action-links {
+        text-align: right;
+    }
+
+    .table-responsive .action-links a {
+        display: inline-block;
+        margin-bottom: 0.3rem;
+    }
+}
