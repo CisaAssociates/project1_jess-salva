@@ -8,10 +8,10 @@ if (!isset($_SESSION['user_data'])) {
     exit();
 }
 
-// Extract session user data
-foreach ($_SESSION['user_data'] as $key => $value) {
-    $$key = $value;
-}
+// Extract session user data safely
+$user_id_session = $_SESSION['user_data']['user_id'] ?? null;
+$role = $_SESSION['user_data']['role'] ?? null;
+$email = $_SESSION['user_data']['email'] ?? null;
 
 // Check if Admin
 if ($role !== "Admin") {
@@ -19,21 +19,22 @@ if ($role !== "Admin") {
     exit();
 }
 
-// Check if user id is provided
-if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
-    header("Location: index.php");
+// Check if user id is provided and is numeric
+$user_id = $_GET['id'] ?? null;
+if (!$user_id || !is_numeric($user_id)) {
+    header("Location: admin-dashboard.php"); // Redirect to admin dashboard if no valid ID
     exit();
 }
-$user_id = (int) $_GET['id'];
+$user_id = (int) $user_id;
 
-// Connect to database
+// Database Connection
 $conn = mysqli_connect($host, $user, $pass, $db);
 if (!$conn) {
     die("Connection failed: " . mysqli_connect_error());
 }
 
-// Fetch user info
-$stmt_user = mysqli_prepare($conn, "SELECT * FROM users WHERE user_id = ?");
+// Fetch User Information
+$stmt_user = mysqli_prepare($conn, "SELECT first_name, last_name FROM users WHERE user_id = ?");
 mysqli_stmt_bind_param($stmt_user, "i", $user_id);
 mysqli_stmt_execute($stmt_user);
 $result_user = mysqli_stmt_get_result($stmt_user);
@@ -45,7 +46,7 @@ if (!$userinfo) {
     exit();
 }
 
-// Fetch user's RFID card
+// Fetch User's RFID Card
 $card_id = null;
 $stmt_card = mysqli_prepare($conn, "SELECT card_id FROM rfidcards WHERE user_id = ?");
 mysqli_stmt_bind_param($stmt_card, "i", $user_id);
@@ -56,33 +57,61 @@ if ($row_card = mysqli_fetch_assoc($result_card)) {
 }
 mysqli_stmt_close($stmt_card);
 
-// --- Pagination ---
+// --- Filtering and Pagination ---
 $limit = 10;
 $page = (isset($_GET['page']) && is_numeric($_GET['page'])) ? (int)$_GET['page'] : 1;
 $offset = ($page - 1) * $limit;
 
-// Count total access logs for this user
-$stmt_total = mysqli_prepare($conn, "SELECT COUNT(*) as total FROM accesslogs WHERE user_id = ? AND access_granted = 1");
-mysqli_stmt_bind_param($stmt_total, "i", $user_id);
+// Initialize filter variables
+$filter_start_date = $_GET['start_date'] ?? '';
+$filter_end_date = $_GET['end_date'] ?? '';
+
+// Construct the WHERE clause for filtering
+$where_clause = "WHERE l.user_id = ? AND l.access_granted = 1";
+$filter_params = [$user_id];
+$filter_types = "i";
+
+if (!empty($filter_start_date)) {
+    $where_clause .= " AND l.timestamp >= ?";
+    $filter_params[] = $filter_start_date . " 00:00:00";
+    $filter_types .= "s";
+}
+
+if (!empty($filter_end_date)) {
+    $where_clause .= " AND l.timestamp <= ?";
+    $filter_params[] = $filter_end_date . " 23:59:59";
+    $filter_types .= "s";
+}
+
+// Count total filtered access logs for this user
+$stmt_total = mysqli_prepare($conn, "SELECT COUNT(*) as total FROM accesslogs l " . $where_clause);
+mysqli_stmt_bind_param($stmt_total, $filter_types, ...$filter_params);
 mysqli_stmt_execute($stmt_total);
 $result_total = mysqli_stmt_get_result($stmt_total);
 $total_records = mysqli_fetch_assoc($result_total)['total'] ?? 0;
 $total_pages = ceil($total_records / $limit);
 mysqli_stmt_close($stmt_total);
 
-// Fetch access logs
+// Fetch filtered access logs
 $stmt_logs = mysqli_prepare($conn, "
     SELECT l.*, u.first_name, u.last_name
     FROM accesslogs l
     LEFT JOIN users u ON l.user_id = u.user_id
-    WHERE l.user_id = ? AND l.access_granted = 1
+    " . $where_clause . "
     ORDER BY l.timestamp DESC
     LIMIT ? OFFSET ?
 ");
-mysqli_stmt_bind_param($stmt_logs, "iii", $user_id, $limit, $offset);
+
+// Add limit and offset to the parameters
+$filter_params[] = $limit;
+$filter_params[] = $offset;
+$filter_types .= "ii";
+
+mysqli_stmt_bind_param($stmt_logs, $filter_types, ...$filter_params);
 mysqli_stmt_execute($stmt_logs);
 $result_logs = mysqli_stmt_get_result($stmt_logs);
 
+mysqli_close($conn); // Close the database connection here after all data fetching
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -99,6 +128,7 @@ $result_logs = mysqli_stmt_get_result($stmt_logs);
             margin-top: 1.5rem;
             text-align: center;
         }
+
         .pagination a,
         .pagination span {
             display: inline-block;
@@ -110,9 +140,11 @@ $result_logs = mysqli_stmt_get_result($stmt_logs);
             border-radius: 4px;
             background-color: #fff;
         }
+
         .pagination a:hover {
             background-color: #eee;
         }
+
         .pagination .current-page {
             font-weight: bold;
             color: #fff;
@@ -120,12 +152,14 @@ $result_logs = mysqli_stmt_get_result($stmt_logs);
             border-color: #337ab7;
             cursor: default;
         }
+
         .pagination .disabled {
             color: #777;
             cursor: default;
             background-color: #f9f9f9;
             border-color: #ddd;
         }
+
         /* Style for status spans */
         .status {
             padding: 0.2em 0.6em;
@@ -135,29 +169,41 @@ $result_logs = mysqli_stmt_get_result($stmt_logs);
             color: #fff;
             white-space: nowrap;
         }
+
         .status-granted {
-            background-color: #5cb85c; /* Green */
+            background-color: #5cb85c;
+            /* Green */
         }
+
         .status-denied {
-            background-color: #d9534f; /* Red */
+            background-color: #d9534f;
+            /* Red */
         }
+
         .status-unknown {
-            background-color: #777; /* Gray */
+            background-color: #777;
+            /* Gray */
         }
+
         .action-links a {
             margin-right: 0.5rem;
             color: #337ab7;
             text-decoration: none;
         }
+
         .action-links a:hover {
             text-decoration: underline;
         }
+
         .action-links .delete-link {
-            color: #d9534f; /* Red */
+            color: #d9534f;
+            /* Red */
         }
+
         .action-links .delete-link:hover {
             color: #c9302c;
         }
+
         /* Styles for Filter Form */
         .filter-form {
             margin-bottom: 1rem;
@@ -168,17 +214,21 @@ $result_logs = mysqli_stmt_get_result($stmt_logs);
             display: flex;
             align-items: center;
             gap: 1rem;
-            flex-wrap: wrap; /* Allow wrapping on smaller screens */
+            flex-wrap: wrap;
+            /* Allow wrapping on smaller screens */
         }
+
         .filter-form label {
             font-weight: bold;
             margin-right: 0.5rem;
         }
+
         .filter-form input[type="date"] {
             padding: 0.4rem;
             border: 1px solid #ccc;
             border-radius: 4px;
         }
+
         .filter-form button {
             padding: 0.5rem 1rem;
             background-color: #337ab7;
@@ -188,24 +238,27 @@ $result_logs = mysqli_stmt_get_result($stmt_logs);
             cursor: pointer;
             transition: background-color 0.2s;
         }
+
         .filter-form button:hover {
             background-color: #286090;
         }
-         .filter-form .clear-filter-link {
-             padding: 0.5rem 1rem;
-             background-color: #f0ad4e;
-             color: white;
-             border: none;
-             border-radius: 4px;
-             cursor: pointer;
-             text-decoration: none;
-             font-size: 0.9em;
-             display: inline-block;
-             text-align: center;
-             line-height: normal;
+
+        .filter-form .clear-filter-link {
+            padding: 0.5rem 1rem;
+            background-color: #f0ad4e;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 0.9em;
+            display: inline-block;
+            text-align: center;
+            line-height: normal;
         }
+
         .filter-form .clear-filter-link:hover {
-             background-color: #ec971f;
+            background-color: #ec971f;
         }
     </style>
 </head>
@@ -270,7 +323,7 @@ $result_logs = mysqli_stmt_get_result($stmt_logs);
 
                 <div class="content-grid">
                     <div class="card">
-                        <h2>Welcome back, <?= htmlspecialchars($userinfo['first_name'].' '.$userinfo['last_name']) ?>!</h2>
+                        <h2>Welcome back, <?= htmlspecialchars($userinfo['first_name'] . ' ' . $userinfo['last_name']) ?>!</h2>
                         <p>Manage your account, view access logs, and update your profile.</p>
                     </div>
 
@@ -320,9 +373,9 @@ $result_logs = mysqli_stmt_get_result($stmt_logs);
 
                 <div class="table-container table-responsive">
                     <h2>Access Log History</h2>
-                    
+
                     <form method="GET" action="admin-view-user.php" class="filter-form">
-                        <input type="hidden" name="id" value="<?= $user_id?>">
+                        <input type="hidden" name="id" value="<?= $user_id ?>">
                         <div>
                             <label for="start_date">From:</label>
                             <input type="date" id="start_date" name="start_date" value="<?= htmlspecialchars($filter_start_date) ?>">
@@ -332,7 +385,9 @@ $result_logs = mysqli_stmt_get_result($stmt_logs);
                             <input type="date" id="end_date" name="end_date" value="<?= htmlspecialchars($filter_end_date) ?>">
                         </div>
                         <button type="submit">Filter</button>
-                        <a href="" class="clear-filter-link">Clear Filter</a>
+                        <?php if (!empty($filter_start_date) || !empty($filter_end_date)): ?>
+                            <a href="admin-view-user.php?id=<?= $user_id ?>" class="clear-filter-link">Clear Filter</a>
+                        <?php endif; ?>
                     </form>
 
                     <div class="table-controls">
@@ -346,7 +401,6 @@ $result_logs = mysqli_stmt_get_result($stmt_logs);
                                 <th>Date Time</th>
                                 <th>Card Scanned</th>
                                 <th>Status</th>
-                                <!-- <th>Action</th> -->
                             </tr>
                         </thead>
                         <tbody id="logTableBody">
@@ -377,19 +431,17 @@ $result_logs = mysqli_stmt_get_result($stmt_logs);
                                     }
 
                                     echo <<<HTML
-                                            <tr>
-                                                <td>{$display_name}</td>
-                                                <td>{$timestamp}</td>
-                                                <td>{$rfid_scanned}</td>
-                                                <td><span class="status {$status_class}">{$status_text}</span></td>
-                                            </tr>
+                                        <tr>
+                                            <td>{$display_name}</td>
+                                            <td>{$timestamp}</td>
+                                            <td>{$rfid_scanned}</td>
+                                            <td><span class="status {$status_class}">{$status_text}</span></td>
+                                        </tr>
                                         HTML;
                                 }
                             } else {
-                                echo '<tr><td colspan="5" style="text-align: center; padding: 1rem;">No access logs found.</td></tr>';
+                                echo '<tr><td colspan="5" style="text-align: center; padding: 1rem;">No access logs found with the current filters.</td></tr>';
                             }
-                            mysqli_stmt_close($stmt_logs); // Close the statement for logs
-                            mysqli_close($conn); // Close DB connection after fetching all needed data
                             ?>
 
                         </tbody>
@@ -397,7 +449,7 @@ $result_logs = mysqli_stmt_get_result($stmt_logs);
 
                     <div class="pagination">
                         <?php if ($page > 1) : ?>
-                            <a href="?page=<?= $page - 1 ?>">&laquo; Previous</a>
+                            <a href="?id=<?= $user_id ?>&page=<?= $page - 1 ?><?php if (!empty($filter_start_date)) echo '&start_date=' . urlencode($filter_start_date); ?><?php if (!empty($filter_end_date)) echo '&end_date=' . urlencode($filter_end_date); ?>">&laquo; Previous</a>
                         <?php else: ?>
                             <span class="disabled">&laquo; Previous</span>
                         <?php endif; ?>
@@ -406,21 +458,33 @@ $result_logs = mysqli_stmt_get_result($stmt_logs);
                         // Display page numbers (optional: limit the number shown for many pages)
                         $range = 2; // Number of links to show around the current page
                         for ($i = 1; $i <= $total_pages; $i++) {
+                            // Only display first, last, and nearby pages
                             if ($i == 1 || $i == $total_pages || ($i >= $page - $range && $i <= $page + $range)) {
                                 if ($i == $page) {
                                     echo '<span class="current-page">' . $i . '</span>';
                                 } else {
-                                    echo '<a href="?page=' . $i . '">' . $i . '</a>';
+                                    echo '<a href="?id=' . $user_id . '&page=' . $i . '">';
+                                    if (!empty($filter_start_date)) echo '&start_date=' . urlencode($filter_start_date);
+                                    if (!empty($filter_end_date)) echo '&end_date=' . urlencode($filter_end_date);
+                                    echo '">' . $i . '</a>';
                                 }
                             } elseif (($i == $page - $range - 1) || ($i == $page + $range + 1)) {
-                                // Add ellipsis (...) if needed
-                                echo '<span>...</span>';
+                                // Add ellipsis (...) if needed, but only once
+                                $dots_shown = false;
+                                if ($i == $page - $range - 1 && $page - $range > 2 && !$dots_shown) {
+                                    echo '<span>...</span>';
+                                    $dots_shown = true;
+                                }
+                                if ($i == $page + $range + 1 && $page + $range < $total_pages - 1 && !$dots_shown) {
+                                    echo '<span>...</span>';
+                                    $dots_shown = true;
+                                }
                             }
                         }
                         ?>
 
                         <?php if ($page < $total_pages) : ?>
-                            <a href="?page=<?= $page + 1 ?>">Next &raquo;</a>
+                            <a href="?id=<?= $user_id ?>&page=<?= $page + 1 ?><?php if (!empty($filter_start_date)) echo '&start_date=' . urlencode($filter_start_date); ?><?php if (!empty($filter_end_date)) echo '&end_date=' . urlencode($filter_end_date); ?>">Next &raquo;</a>
                         <?php else: ?>
                             <span class="disabled">Next &raquo;</span>
                         <?php endif; ?>
