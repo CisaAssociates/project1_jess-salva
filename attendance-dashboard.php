@@ -58,16 +58,14 @@ $sql_select_data = "SELECT l.*, u.first_name, u.last_name ";
 
 $sql_from_joins = "
     FROM accesslogs l
-    LEFT JOIN rfidcards r ON l.rfid_scanned = r.card_id
-    LEFT JOIN users u ON r.user_id = u.user_id
-    JOIN (
-        SELECT user_id, DATE(timestamp) AS log_date, MAX(timestamp) AS latest_time
+    INNER JOIN (
+        SELECT user_id, MAX(timestamp) AS latest_time
         FROM accesslogs
-        GROUP BY user_id, DATE(timestamp)
-    ) recent_logs
-      ON l.user_id = recent_logs.user_id -- Check if l.user_id exists in accesslogs
-     AND DATE(l.timestamp) = recent_logs.log_date
-     AND l.timestamp = recent_logs.latest_time
+        WHERE access_granted = 1
+        GROUP BY user_id
+    ) latest_log ON l.user_id = latest_log.user_id AND l.timestamp = latest_log.latest_time
+    LEFT JOIN rfidcards r ON l.rfid_scanned = r.card_id
+    LEFT JOIN users u ON l.user_id = u.user_id
 ";
 
 // --- Build Dynamic WHERE Clause & Parameters ---
