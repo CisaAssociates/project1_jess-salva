@@ -15,17 +15,6 @@ $first_name = $_SESSION['user_data']['first_name'] ?? null;
 $last_name = $_SESSION['user_data']['last_name'] ?? null;
 $role = $_SESSION['user_data']['role'] ?? null;
 
-// --- Get User's RFID Card (remains the same) ---
-$card_id = null;
-$sql_card = "SELECT card_id FROM rfidcards WHERE user_id = ?";
-$stmt_card = mysqli_prepare($conn, $sql_card);
-mysqli_stmt_bind_param($stmt_card, "i", $user_id);
-mysqli_stmt_execute($stmt_card);
-$result_card = mysqli_stmt_get_result($stmt_card);
-if ($data_card = mysqli_fetch_assoc($result_card)) {
-    $card_id = $data_card['card_id'];
-}
-mysqli_stmt_close($stmt_card);
 
 // Check if user has admin role
 if($role !== "Admin"){
@@ -39,6 +28,18 @@ $conn = mysqli_connect($host, $user, $pass, $db);
 if (!$conn) {
     die("Connection failed: " . mysqli_connect_error());
 }
+
+// --- Get User's RFID Card (remains the same) ---
+$card_id = null;
+$sql_card = "SELECT card_id FROM rfidcards WHERE user_id = ?";
+$stmt_card = mysqli_prepare($conn, $sql_card);
+mysqli_stmt_bind_param($stmt_card, "i", $user_id);
+mysqli_stmt_execute($stmt_card);
+$result_card = mysqli_stmt_get_result($stmt_card);
+if ($data_card = mysqli_fetch_assoc($result_card)) {
+    $card_id = $data_card['card_id'];
+}
+mysqli_stmt_close($stmt_card);
 
 // --- Get Filter Dates from GET Request ---
 $filter_start_date = $_GET['start_date'] ?? ''; // Default to empty string if not set
