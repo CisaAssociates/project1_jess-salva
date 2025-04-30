@@ -56,30 +56,70 @@ if ($row_card = mysqli_fetch_assoc($result_card)) {
 }
 mysqli_stmt_close($stmt_card);
 
+// --- Handle Date Filtering ---
+$filter_start_date = '';
+$filter_end_date = '';
+
+if (isset($_GET['start_date']) && !empty($_GET['start_date'])) {
+    $filter_start_date = htmlspecialchars($_GET['start_date']);
+}
+
+if (isset($_GET['end_date']) && !empty($_GET['end_date'])) {
+    $filter_end_date = htmlspecialchars($_GET['end_date']);
+}
+
 // --- Pagination ---
 $limit = 10;
 $page = (isset($_GET['page']) && is_numeric($_GET['page'])) ? (int)$_GET['page'] : 1;
 $offset = ($page - 1) * $limit;
 
-// Count total access logs for this user
-$stmt_total = mysqli_prepare($conn, "SELECT COUNT(*) as total FROM accesslogs WHERE user_id = ? AND access_granted = 1");
-mysqli_stmt_bind_param($stmt_total, "i", $user_id);
+// Build the base query for the total count and access logs
+$count_query = "SELECT COUNT(*) as total FROM accesslogs WHERE user_id = ? AND access_granted = 1";
+$logs_query = "
+    SELECT l.*, u.first_name, u.last_name
+    FROM accesslogs l
+    LEFT JOIN users u ON l.user_id = u.user_id
+    WHERE l.user_id = ? AND l.access_granted = 1";
+
+// Add date filters if provided
+$query_params = [$user_id];
+
+if (!empty($filter_start_date)) {
+    $count_query .= " AND DATE(timestamp) >= ?";
+    $logs_query .= " AND DATE(timestamp) >= ?";
+    $query_params[] = $filter_start_date;
+}
+
+if (!empty($filter_end_date)) {
+    $count_query .= " AND DATE(timestamp) <= ?";
+    $logs_query .= " AND DATE(timestamp) <= ?";
+    $query_params[] = $filter_end_date;
+}
+
+// Complete the logs query with order and limit
+$logs_query .= " ORDER BY l.timestamp DESC LIMIT ? OFFSET ?";
+
+// Count total access logs for this user (with filters applied)
+$stmt_total = mysqli_prepare($conn, $count_query);
+// Dynamically bind parameters based on what filters are applied
+$param_types = str_repeat('s', count($query_params));
+$stmt_total_params = array_merge([$stmt_total, $param_types], $query_params);
+call_user_func_array('mysqli_stmt_bind_param', $stmt_total_params);
 mysqli_stmt_execute($stmt_total);
 $result_total = mysqli_stmt_get_result($stmt_total);
 $total_records = mysqli_fetch_assoc($result_total)['total'] ?? 0;
 $total_pages = ceil($total_records / $limit);
 mysqli_stmt_close($stmt_total);
 
-// Fetch access logs
-$stmt_logs = mysqli_prepare($conn, "
-    SELECT l.*, u.first_name, u.last_name
-    FROM accesslogs l
-    LEFT JOIN users u ON l.user_id = u.user_id
-    WHERE l.user_id = ? AND l.access_granted = 1
-    ORDER BY l.timestamp DESC
-    LIMIT ? OFFSET ?
-");
-mysqli_stmt_bind_param($stmt_logs, "iii", $user_id, $limit, $offset);
+// Add pagination parameters to query params
+$logs_params = array_merge($query_params, [$limit, $offset]);
+
+// Fetch access logs with filtering and pagination
+$stmt_logs = mysqli_prepare($conn, $logs_query);
+// Bind all parameters (user_id, date filters if any, limit, offset)
+$param_types = str_repeat('s', count($query_params)) . 'ii'; // Add 'ii' for limit and offset
+$stmt_logs_params = array_merge([$stmt_logs, $param_types], $logs_params);
+call_user_func_array('mysqli_stmt_bind_param', $stmt_logs_params);
 mysqli_stmt_execute($stmt_logs);
 $result_logs = mysqli_stmt_get_result($stmt_logs);
 
@@ -270,8 +310,8 @@ $result_logs = mysqli_stmt_get_result($stmt_logs);
 
                 <div class="content-grid">
                     <div class="card">
-                        <h2>Welcome back, <?= htmlspecialchars($userinfo['first_name'].' '.$userinfo['last_name']) ?>!</h2>
-                        <p>Manage your account, view access logs, and update your profile.</p>
+                        <h2>User: <?= htmlspecialchars($userinfo['first_name'].' '.$userinfo['last_name']) ?></h2>
+                        <p>View and manage access logs for this user.</p>
                     </div>
 
                     <div class="card">
@@ -322,16 +362,17 @@ $result_logs = mysqli_stmt_get_result($stmt_logs);
                     <h2>Access Log History</h2>
                     
                     <form method="GET" action="" class="filter-form">
+                        <input type="hidden" name="id" value="<?= $user_id ?>">
                         <div>
                             <label for="start_date">From:</label>
-                            <input type="date" id="start_date" name="start_date" value="<?= htmlspecialchars($filter_start_date) ?>">
+                            <input type="date" id="start_date" name="start_date" value="<?= $filter_start_date ?>">
                         </div>
                         <div>
                             <label for="end_date">To:</label>
-                            <input type="date" id="end_date" name="end_date" value="<?= htmlspecialchars($filter_end_date) ?>">
+                            <input type="date" id="end_date" name="end_date" value="<?= $filter_end_date ?>">
                         </div>
                         <button type="submit">Filter</button>
-                        <a href="?" class="clear-filter-link">Clear Filter</a>
+                        <a href="?id=<?= $user_id ?>" class="clear-filter-link">Clear Filter</a>
                     </form>
 
                     <div class="table-controls">
@@ -395,8 +436,19 @@ $result_logs = mysqli_stmt_get_result($stmt_logs);
                     </table>
 
                     <div class="pagination">
+                        <?php
+                        // Create pagination links that preserve filter parameters
+                        $pagination_url = "?id=" . $user_id;
+                        if (!empty($filter_start_date)) {
+                            $pagination_url .= "&start_date=" . urlencode($filter_start_date);
+                        }
+                        if (!empty($filter_end_date)) {
+                            $pagination_url .= "&end_date=" . urlencode($filter_end_date);
+                        }
+                        ?>
+
                         <?php if ($page > 1) : ?>
-                            <a href="?page=<?= $page - 1 ?>">&laquo; Previous</a>
+                            <a href="<?= $pagination_url ?>&page=<?= $page - 1 ?>">&laquo; Previous</a>
                         <?php else: ?>
                             <span class="disabled">&laquo; Previous</span>
                         <?php endif; ?>
@@ -409,7 +461,7 @@ $result_logs = mysqli_stmt_get_result($stmt_logs);
                                 if ($i == $page) {
                                     echo '<span class="current-page">' . $i . '</span>';
                                 } else {
-                                    echo '<a href="?page=' . $i . '">' . $i . '</a>';
+                                    echo '<a href="' . $pagination_url . '&page=' . $i . '">' . $i . '</a>';
                                 }
                             } elseif (($i == $page - $range - 1) || ($i == $page + $range + 1)) {
                                 // Add ellipsis (...) if needed
@@ -419,7 +471,7 @@ $result_logs = mysqli_stmt_get_result($stmt_logs);
                         ?>
 
                         <?php if ($page < $total_pages) : ?>
-                            <a href="?page=<?= $page + 1 ?>">Next &raquo;</a>
+                            <a href="<?= $pagination_url ?>&page=<?= $page + 1 ?>">Next &raquo;</a>
                         <?php else: ?>
                             <span class="disabled">Next &raquo;</span>
                         <?php endif; ?>
@@ -492,14 +544,34 @@ $result_logs = mysqli_stmt_get_result($stmt_logs);
                 }
             });
 
-            // --- Initial Display Logic (Example) ---
-            // You might have loading indicators etc.
+            // --- Initial Display Logic ---
             const loadingIndicator = document.getElementById('loading-indicator');
             const dashboardLayout = document.getElementById('dashboard-layout');
             if (loadingIndicator) loadingIndicator.classList.add('hidden'); // Hide loading
             if (dashboardLayout) dashboardLayout.classList.remove('hidden'); // Show dashboard
 
+            // --- Date validation for the filter form ---
+            const filterForm = document.querySelector('.filter-form');
+            const startDateInput = document.getElementById('start_date');
+            const endDateInput = document.getElementById('end_date');
 
+            if (filterForm) {
+                filterForm.addEventListener('submit', (event) => {
+                    if (startDateInput.value && endDateInput.value) {
+                        const startDate = new Date(startDateInput.value);
+                        const endDate = new Date(endDateInput.value);
+                        
+                        if (startDate > endDate) {
+                            event.preventDefault();
+                            showError('Start date cannot be after end date.');
+                            return false;
+                        }
+                    }
+                    // If validation passes or only one date is provided
+                    hideError();
+                    return true;
+                });
+            }
         });
     </script>
 
