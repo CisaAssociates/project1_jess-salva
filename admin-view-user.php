@@ -139,8 +139,21 @@ $logs_bind_params[] = &$limit; // Add limit reference
 $logs_bind_params[] = &$offset; // Add offset reference
 
 
+// --- Debugging for Logs Query (Added based on user feedback) ---
+/*
+echo "<h2>Logs Query Debug:</h2>";
+echo "<pre>Logs Query: "; var_dump($logs_query); echo "</pre>";
+echo "<pre>Logs Parameter Types: "; var_dump($logs_param_types); echo "</pre>";
+echo "<pre>Logs Bind Parameters Array: "; var_dump($logs_bind_params); echo "</pre>";
+echo "<pre>Number of placeholders in logs query: " . substr_count($logs_query, '?') . "</pre>";
+echo "<pre>Number of elements in \$logs_bind_params (including type string ref): " . count($logs_bind_params) . "</pre>";
+echo "<pre>Total arguments passed to bind_param (logs): " . (1 + count($logs_bind_params)) . "</pre>";
+// --- End Debugging ---
+*/
+
+
 // Bind parameters for logs query using call_user_func_array with references
-call_user_func_array('mysqli_stmt_bind_param', array_merge([$stmt_logs], $logs_bind_params)); // This line corresponds to the area of line 126
+call_user_func_array('mysqli_stmt_bind_param', array_merge([$stmt_logs], $logs_bind_params)); // This line corresponds to the area of line 143
 
 mysqli_stmt_execute($stmt_logs); // This should now have parameters bound
 $result_logs = mysqli_stmt_get_result($stmt_logs);
