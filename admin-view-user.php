@@ -277,7 +277,7 @@ mysqli_close($conn); // Close the database connection here after all data fetchi
                             <path fill-rule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />
                         </svg>
                     </button>
-                    <span class="dashboard-title">User Attendance</span>
+                    <span class="dashboard-title">User Gatepass Logs</span>
                 </div>
                 <div class="navbar-right">
                     <div class="user-info">
