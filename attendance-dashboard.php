@@ -378,7 +378,7 @@ $base_pagination_url = '?' . http_build_query($query_params);
                 <div id="error-display" class="error-display hidden"></div>
 
                 <div class="table-container ">
-                    <h2>Attendance History</h2>
+                    <h2>Gatepass Logs History</h2>
 
                     <form method="GET" action="" class="filter-form">
                         <div>
