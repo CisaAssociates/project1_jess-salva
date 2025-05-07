@@ -2,10 +2,23 @@
 
 include 'db_config.php';
 
-$conn = mysqli_connect($host,$user,$pass,$db);
+$conn = mysqli_connect($host, $user, $pass, $db);
 
-$stmt = "ALTER TABLE attendance_logs ADD COLUMN access_granted BOOL";
+if (!$conn) {
+    die("Connection failed: " . mysqli_connect_error());
+}
 
-if(mysqli_query($conn,$stmt)){
-    echo "sucess";
-};
+$sql = "SELECT * FROM attendance_logs";
+$result = mysqli_query($conn, $sql);
+
+if ($result) {
+    echo "<pre>";
+    while ($row = mysqli_fetch_assoc($result)) {
+        print_r($row);
+    }
+    echo "</pre>";
+} else {
+    echo "Error: " . mysqli_error($conn);
+}
+
+mysqli_close($conn);
