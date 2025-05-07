@@ -173,7 +173,7 @@ mysqli_stmt_close($stmt_logs);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Attendance Logs Dashboard</title>
     <link rel="stylesheet" href="./styles/style.css"> <?php // General styles ?>
-    <link rel="stylesheet" href="./styles/admin-dashboard.css"> <?php // Dashboard layout styles ?>
+    
     <style>
         /* NEW CSS FOR TABLE AND RELATED ELEMENTS */
         .table-container {
