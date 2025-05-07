@@ -499,7 +499,7 @@ HTML;
         .user-info-column {
             flex: 0 0 20%;
             padding: 15px;
-            background-color: white;
+            background-color: #337ab7;
             border-right: 1px solid #e9ecef;
             color: white;
         }
@@ -518,18 +518,18 @@ HTML;
             font-weight: bold;
             font-size: 1.1em;
             margin-bottom: 5px;
-            color: #495057;
+            color: white;
         }
 
         .user-date {
             font-weight: 500;
-            color: #6c757d;
+            color: white;
             margin-bottom: 10px;
         }
 
         .user-detail {
             font-size: 0.9em;
-            color: #6c757d;
+            color: white;
             margin-bottom: 3px;
         }
 
