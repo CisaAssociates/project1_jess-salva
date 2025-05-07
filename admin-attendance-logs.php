@@ -1,9 +1,4 @@
 <?php
-// Ensure error reporting is helpful during debugging
-// ini_set('display_errors', 1);
-// ini_set('display_startup_errors', 1);
-// error_reporting(E_ALL);
-
 include("db_config.php");
 session_start();
 
@@ -22,7 +17,7 @@ $role = isset($_SESSION['user_data']['role']) ? $_SESSION['user_data']['role'] :
 
 
 // Check if user has admin role
-if($role !== "Admin"){
+if ($role !== "Admin") {
     header("Location: index.php"); // Redirect non-admin users
     exit();
 }
@@ -47,8 +42,8 @@ if ($stmt_card) { // Check if statement prepared successfully
     }
     mysqli_stmt_close($stmt_card);
 } else {
-     // Handle error if prepare failed, though it might be non-critical for the page if card_id display is optional
-     // echo "Error preparing card query: " . mysqli_error($conn);
+    // Handle error if prepare failed, though it might be non-critical for the page if card_id display is optional
+    // echo "Error preparing card query: " . mysqli_error($conn);
 }
 
 
@@ -111,7 +106,7 @@ if (!empty($params)) {
     // Prepare parameters for call_user_func_array (pass by reference)
     $a_params_total = [];
     $a_params_total[] = &$param_types;
-    for($i = 0; $i < count($params); $i++) {
+    for ($i = 0; $i < count($params); $i++) {
         $a_params_total[] = &$params[$i];
     }
     call_user_func_array('mysqli_stmt_bind_param', array_merge([$stmt_total], $a_params_total));
@@ -148,7 +143,7 @@ $sql_logs = "
 $stmt_logs = mysqli_prepare($conn, $sql_logs);
 
 if (!$stmt_logs) {
-     die("Error preparing log data query: " . mysqli_error($conn) . " SQL: " . $sql_logs);
+    die("Error preparing log data query: " . mysqli_error($conn) . " SQL: " . $sql_logs);
 }
 
 // Combine date params with pagination params
@@ -167,7 +162,7 @@ $log_param_types .= "i"; // 'i' for integer
 if (!empty($log_param_types)) {
     $a_params_logs = [];
     $a_params_logs[] = &$log_param_types;
-    for($i = 0; $i < count($log_params); $i++) {
+    for ($i = 0; $i < count($log_params); $i++) {
         $a_params_logs[] = &$log_params[$i];
     }
     call_user_func_array('mysqli_stmt_bind_param', array_merge([$stmt_logs], $a_params_logs));
@@ -210,7 +205,8 @@ mysqli_close($conn);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Attendance Logs Dashboard</title> <link rel="stylesheet" href="./styles/style.css">
+    <title>Attendance Logs Dashboard</title>
+    <link rel="stylesheet" href="./styles/style.css">
     <link rel="stylesheet" href="./styles/admin-dashboard.css">
     <style>
         /* Existing styles for pagination, status, filter form, etc. */
@@ -218,6 +214,7 @@ mysqli_close($conn);
             margin-top: 1.5rem;
             text-align: center;
         }
+
         .pagination a,
         .pagination span {
             display: inline-block;
@@ -229,9 +226,11 @@ mysqli_close($conn);
             border-radius: 4px;
             background-color: #fff;
         }
+
         .pagination a:hover {
             background-color: #eee;
         }
+
         .pagination .current-page {
             font-weight: bold;
             color: #fff;
@@ -239,12 +238,14 @@ mysqli_close($conn);
             border-color: #337ab7;
             cursor: default;
         }
+
         .pagination .disabled {
             color: #777;
             cursor: default;
             background-color: #f9f9f9;
             border-color: #ddd;
         }
+
         /* Style for status spans */
         .status {
             padding: 0.2em 0.6em;
@@ -254,29 +255,41 @@ mysqli_close($conn);
             color: #fff;
             white-space: nowrap;
         }
+
         .status-granted {
-            background-color: #5cb85c; /* Green */
+            background-color: #5cb85c;
+            /* Green */
         }
+
         .status-denied {
-            background-color: #d9534f; /* Red */
+            background-color: #d9534f;
+            /* Red */
         }
+
         .status-unknown {
-            background-color: #777; /* Gray */
+            background-color: #777;
+            /* Gray */
         }
+
         .action-links a {
             margin-right: 0.5rem;
             color: #337ab7;
             text-decoration: none;
         }
+
         .action-links a:hover {
             text-decoration: underline;
         }
+
         .action-links .delete-link {
-            color: #d9534f; /* Red */
+            color: #d9534f;
+            /* Red */
         }
+
         .action-links .delete-link:hover {
             color: #c9302c;
         }
+
         /* Styles for Filter Form */
         .filter-form {
             margin-bottom: 1rem;
@@ -287,17 +300,21 @@ mysqli_close($conn);
             display: flex;
             align-items: center;
             gap: 1rem;
-            flex-wrap: wrap; /* Allow wrapping on smaller screens */
+            flex-wrap: wrap;
+            /* Allow wrapping on smaller screens */
         }
+
         .filter-form label {
             font-weight: bold;
             margin-right: 0.5rem;
         }
+
         .filter-form input[type="date"] {
             padding: 0.4rem;
             border: 1px solid #ccc;
             border-radius: 4px;
         }
+
         .filter-form button {
             padding: 0.5rem 1rem;
             background-color: #337ab7;
@@ -307,41 +324,54 @@ mysqli_close($conn);
             cursor: pointer;
             transition: background-color 0.2s;
         }
+
         .filter-form button:hover {
             background-color: #286090;
         }
+
         .filter-form .clear-filter-link {
-             padding: 0.5rem 1rem;
-             background-color: #f0ad4e;
-             color: white;
-             border: none;
-             border-radius: 4px;
-             cursor: pointer;
-             text-decoration: none;
-             font-size: 0.9em; /* Match button size roughly */
-             display: inline-block; /* Make it behave like a button */
-             text-align: center;
-             line-height: normal; /* Adjust line height if needed */
-        }
-        .filter-form .clear-filter-link:hover {
-             background-color: #ec971f;
+            padding: 0.5rem 1rem;
+            background-color: #f0ad4e;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 0.9em;
+            /* Match button size roughly */
+            display: inline-block;
+            /* Make it behave like a button */
+            text-align: center;
+            line-height: normal;
+            /* Adjust line height if needed */
         }
 
-         /* --- Styles for Side-by-Side Sections and Log Entries --- */
+        .filter-form .clear-filter-link:hover {
+            background-color: #ec971f;
+        }
+
+        /* --- Styles for Side-by-Side Sections and Log Entries --- */
         .attendance-tables-container {
-            display: flex; /* Use Flexbox to arrange sections side-by-side */
-            gap: 20px; /* Space between the sections */
-            flex-wrap: wrap; /* Allow sections to wrap on smaller screens */
+            display: flex;
+            /* Use Flexbox to arrange sections side-by-side */
+            gap: 20px;
+            /* Space between the sections */
+            flex-wrap: wrap;
+            /* Allow sections to wrap on smaller screens */
         }
 
         .attendance-table-wrapper {
-            flex: 1; /* Allow sections to grow and shrink */
-            min-width: 300px; /* Minimum width before wrapping */
-            background-color: #fff; /* White background for each section */
+            flex: 1;
+            /* Allow sections to grow and shrink */
+            min-width: 300px;
+            /* Minimum width before wrapping */
+            background-color: #fff;
+            /* White background for each section */
             padding: 1rem;
             border: 1px solid #ddd;
             border-radius: 5px;
-            margin-bottom: 1rem; /* Space below sections */
+            margin-bottom: 1rem;
+            /* Space below sections */
         }
 
         .attendance-table-wrapper h3 {
@@ -353,20 +383,24 @@ mysqli_close($conn);
 
         /* Style for individual log entries */
         .log-entry {
-            margin-bottom: 1rem; /* Space after each log entry */
+            margin-bottom: 1rem;
+            /* Space after each log entry */
             padding-bottom: 1rem;
-            border-bottom: 1px solid #eee; /* Separator line */
+            border-bottom: 1px solid #eee;
+            /* Separator line */
         }
 
         .log-entry:last-child {
             margin-bottom: 0;
             padding-bottom: 0;
-            border-bottom: none; /* No border after the last entry */
+            border-bottom: none;
+            /* No border after the last entry */
         }
 
         /* Style for each detail line (column name | value) */
         .log-detail {
-            margin-bottom: 0.4rem; /* Space between detail lines */
+            margin-bottom: 0.4rem;
+            /* Space between detail lines */
             /* You can use Flexbox here for alignment if needed, e.g., */
             /* display: flex; */
             /* align-items: baseline; */
@@ -374,29 +408,31 @@ mysqli_close($conn);
 
         .detail-name {
             font-weight: bold;
-            margin-right: 0.5rem; /* Space between name and separator */
+            margin-right: 0.5rem;
+            /* Space between name and separator */
         }
 
-         /* Optional: Style for the separator */
-         .detail-name::after {
-             content: " |"; /* Add the separator after the name */
-             font-weight: normal; /* Don't bold the separator */
-             margin-left: 0.5rem; /* Space between separator and value */
-         }
+        /* Optional: Style for the separator */
+        .detail-name::after {
+            content: " |";
+            /* Add the separator after the name */
+            font-weight: normal;
+            /* Don't bold the separator */
+            margin-left: 0.5rem;
+            /* Space between separator and value */
+        }
 
-         .detail-value {
-             /* Add specific styles for the value if needed */
-         }
+        .detail-value {
+            /* Add specific styles for the value if needed */
+        }
 
-         /* Style for the 'No logs found' message */
-         .no-logs-message {
-             text-align: center;
-             padding: 1rem;
-             font-style: italic;
-             color: #777;
-         }
-
-
+        /* Style for the 'No logs found' message */
+        .no-logs-message {
+            text-align: center;
+            padding: 1rem;
+            font-style: italic;
+            color: #777;
+        }
     </style>
 </head>
 
@@ -438,7 +474,9 @@ mysqli_close($conn);
                     </li>
                     <li>
                         <a href="./attendance-dashboard.php" class="nav-link active">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg> <span>Attendance Logs</span>
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg> <span>Attendance Logs</span>
                         </a>
                     </li>
                     <li>
@@ -457,7 +495,7 @@ mysqli_close($conn);
             <div class="main-content-inner">
 
                 <div class="content-grid">
-                   <div class="card">
+                    <div class="card">
                         <h2>Welcome back, <?= htmlspecialchars($first_name ?? '') ?>!</h2>
                         <p>View attendance logs and manage users.</p>
                     </div>
@@ -504,7 +542,7 @@ mysqli_close($conn);
                             <input type="date" id="end_date" name="end_date" value="<?= htmlspecialchars($filter_end_date) ?>">
                         </div>
                         <button type="submit">Filter</button>
-                         <?php if (!empty($filter_start_date) || !empty($filter_end_date)) : ?>
+                        <?php if (!empty($filter_start_date) || !empty($filter_end_date)) : ?>
                             <a href="?" class="clear-filter-link">Clear Filter</a>
                         <?php endif; ?>
                     </form>
@@ -542,21 +580,21 @@ mysqli_close($conn);
                                         $verification_details_list = [];
                                         if (isset($row['face_recognized']) && $row['face_recognized'] === TRUE) {
                                             $verification_details_list[] = 'Face: Recognized';
-                                             if (isset($row['confidence_score']) && $row['confidence_score'] !== NULL) {
-                                                  $verification_details_list[] = '(' . htmlspecialchars(number_format($row['confidence_score'], 2)) . '%)';
-                                             }
+                                            if (isset($row['confidence_score']) && $row['confidence_score'] !== NULL) {
+                                                $verification_details_list[] = '(' . htmlspecialchars(number_format($row['confidence_score'], 2)) . '%)';
+                                            }
                                         } elseif (isset($row['face_recognized']) && $row['face_recognized'] === FALSE) {
-                                             if (isset($row['confidence_score']) && $row['confidence_score'] !== NULL) {
-                                                  $verification_details_list[] = 'Face: Not Recognized (' . htmlspecialchars(number_format($row['confidence_score'], 2)) . '%)';
-                                             } else {
-                                                  $verification_details_list[] = 'Face: Attempted';
-                                             }
+                                            if (isset($row['confidence_score']) && $row['confidence_score'] !== NULL) {
+                                                $verification_details_list[] = 'Face: Not Recognized (' . htmlspecialchars(number_format($row['confidence_score'], 2)) . '%)';
+                                            } else {
+                                                $verification_details_list[] = 'Face: Attempted';
+                                            }
                                         }
 
                                         if (isset($row['rfid_card_id_used']) && $row['rfid_card_id_used'] !== NULL) {
                                             $verification_details_list[] = 'RFID: ' . htmlspecialchars($row['rfid_card_id_used']);
                                         }
-                                         $verification_details_text = empty($verification_details_list) ? 'N/A' : implode(' ', $verification_details_list);
+                                        $verification_details_text = empty($verification_details_list) ? 'N/A' : implode(' ', $verification_details_list);
 
 
                                         // Determine Access Granted Status Display
@@ -587,8 +625,8 @@ HTML;
                         </div>
 
                         <div class="attendance-table-wrapper out-section">
-                             <h3>OUT Logs</h3>
-                             <div class="log-list" id="outLogList">
+                            <h3>OUT Logs</h3>
+                            <div class="log-list" id="outLogList">
                                 <?php
                                 if (!empty($out_logs)) {
                                     foreach ($out_logs as $row) {
@@ -613,21 +651,21 @@ HTML;
                                         $verification_details_list = [];
                                         if (isset($row['face_recognized']) && $row['face_recognized'] === TRUE) {
                                             $verification_details_list[] = 'Face: Recognized';
-                                             if (isset($row['confidence_score']) && $row['confidence_score'] !== NULL) {
-                                                  $verification_details_list[] = '(' . htmlspecialchars(number_format($row['confidence_score'], 2)) . '%)';
-                                             }
+                                            if (isset($row['confidence_score']) && $row['confidence_score'] !== NULL) {
+                                                $verification_details_list[] = '(' . htmlspecialchars(number_format($row['confidence_score'], 2)) . '%)';
+                                            }
                                         } elseif (isset($row['face_recognized']) && $row['face_recognized'] === FALSE) {
-                                             if (isset($row['confidence_score']) && $row['confidence_score'] !== NULL) {
-                                                  $verification_details_list[] = 'Face: Not Recognized (' . htmlspecialchars(number_format($row['confidence_score'], 2)) . '%)';
-                                             } else {
-                                                  $verification_details_list[] = 'Face: Attempted';
-                                             }
+                                            if (isset($row['confidence_score']) && $row['confidence_score'] !== NULL) {
+                                                $verification_details_list[] = 'Face: Not Recognized (' . htmlspecialchars(number_format($row['confidence_score'], 2)) . '%)';
+                                            } else {
+                                                $verification_details_list[] = 'Face: Attempted';
+                                            }
                                         }
 
                                         if (isset($row['rfid_card_id_used']) && $row['rfid_card_id_used'] !== NULL) {
                                             $verification_details_list[] = 'RFID: ' . htmlspecialchars($row['rfid_card_id_used']);
                                         }
-                                         $verification_details_text = empty($verification_details_list) ? 'N/A' : implode(' ', $verification_details_list);
+                                        $verification_details_text = empty($verification_details_list) ? 'N/A' : implode(' ', $verification_details_list);
 
 
                                         // Determine Access Granted Status Display
@@ -654,7 +692,7 @@ HTML;
                                     echo '<div class="no-logs-message">No OUT logs found for the selected criteria.</div>';
                                 }
                                 ?>
-                             </div>
+                            </div>
                         </div>
 
                     </div> <?php if ($total_pages > 1) : ?>
@@ -666,25 +704,25 @@ HTML;
                             <?php endif; ?>
 
                             <?php
-                            $range = 2; // Number of pages to show around the current page
-                            $start_range = max(1, $page - $range);
-                            $end_range = min($total_pages, $page + $range);
+                                $range = 2; // Number of pages to show around the current page
+                                $start_range = max(1, $page - $range);
+                                $end_range = min($total_pages, $page + $range);
 
-                            for ($i = 1; $i <= $total_pages; $i++) {
-                                // Show first page, last page, or pages within the range of the current page
-                                if ($i == 1 || $i == $total_pages || ($i >= $start_range && $i <= $end_range)) {
-                                    if ($i == $page) {
-                                        echo '<span class="current-page">' . $i . '</span>';
-                                    } else {
-                                        echo '<a href="' . htmlspecialchars($base_pagination_url . '&page=' . $i) . '">' . $i . '</a>';
+                                for ($i = 1; $i <= $total_pages; $i++) {
+                                    // Show first page, last page, or pages within the range of the current page
+                                    if ($i == 1 || $i == $total_pages || ($i >= $start_range && $i <= $end_range)) {
+                                        if ($i == $page) {
+                                            echo '<span class="current-page">' . $i . '</span>';
+                                        } else {
+                                            echo '<a href="' . htmlspecialchars($base_pagination_url . '&page=' . $i) . '">' . $i . '</a>';
+                                        }
+                                    } elseif (($i == $start_range - 1) || ($i == $end_range + 1)) {
+                                        // Print ellipsis if there's a gap (only once between segments)
+                                        if (($i == $start_range - 1 && $start_range > 2) || ($i == $end_range + 1 && $end_range < $total_pages - 1)) {
+                                            echo '<span>...</span>';
+                                        }
                                     }
-                                } elseif (($i == $start_range - 1) || ($i == $end_range + 1)) {
-                                    // Print ellipsis if there's a gap (only once between segments)
-                                     if (($i == $start_range - 1 && $start_range > 2) || ($i == $end_range + 1 && $end_range < $total_pages - 1)) {
-                                        echo '<span>...</span>';
-                                     }
                                 }
-                            }
                             ?>
 
                             <?php if ($page < $total_pages) : ?>
@@ -721,7 +759,7 @@ HTML;
                 });
             }
 
-             // --- Client-Side Search/Filter (searches both lists on current page) ---
+            // --- Client-Side Search/Filter (searches both lists on current page) ---
             if (searchInput && (inLogList || outLogList)) { // Check if at least one log list container exists
                 searchInput.addEventListener('input', () => {
                     const searchTerm = searchInput.value.toLowerCase().trim();
@@ -733,12 +771,12 @@ HTML;
 
 
                     allLogEntries.forEach(logEntryDiv => {
-                         const logEntryText = logEntryDiv.textContent.toLowerCase();
-                         if (logEntryText.includes(searchTerm)) {
-                             logEntryDiv.style.display = ''; // Show the log entry div
-                         } else {
-                             logEntryDiv.style.display = 'none'; // Hide the log entry div
-                         }
+                        const logEntryText = logEntryDiv.textContent.toLowerCase();
+                        if (logEntryText.includes(searchTerm)) {
+                            logEntryDiv.style.display = ''; // Show the log entry div
+                        } else {
+                            logEntryDiv.style.display = 'none'; // Hide the log entry div
+                        }
                     });
 
                     // You might also want to hide the "No logs found" messages if search results are found.
@@ -748,25 +786,28 @@ HTML;
 
 
             // --- Helper Functions (assuming these exist elsewhere or are placeholders) ---
-            function showError(message) { /* Implementation depends on your needs */
-                 if (errorDisplay) {
-                     errorDisplay.classList.remove('hidden');
-                     errorDisplay.textContent = message;
-                 }
-             }
-            function hideError() { /* Implementation depends on your needs */
-                 if (errorDisplay) {
-                      errorDisplay.classList.add('hidden');
-                      errorDisplay.textContent = '';
-                 }
-             }
+            function showError(message) {
+                /* Implementation depends on your needs */
+                if (errorDisplay) {
+                    errorDisplay.classList.remove('hidden');
+                    errorDisplay.textContent = message;
+                }
+            }
+
+            function hideError() {
+                /* Implementation depends on your needs */
+                if (errorDisplay) {
+                    errorDisplay.classList.add('hidden');
+                    errorDisplay.textContent = '';
+                }
+            }
 
             // --- Close sidebar on outside click (small screens) ---
-             // Assuming your existing implementation for this
-             document.addEventListener('click', (event) => {
-                 // Add logic to close sidebar if click is outside sidebar and hamburger
-                 // e.g., if sidebar is open AND !sidebar.contains(event.target) AND !hamburgerButton.contains(event.target)
-             });
+            // Assuming your existing implementation for this
+            document.addEventListener('click', (event) => {
+                // Add logic to close sidebar if click is outside sidebar and hamburger
+                // e.g., if sidebar is open AND !sidebar.contains(event.target) AND !hamburgerButton.contains(event.target)
+            });
 
 
             // --- Initial Display Logic ---
