@@ -499,7 +499,7 @@ HTML;
         .user-info-column {
             flex: 0 0 20%;
             padding: 15px;
-            background-color: #337ab7;
+            background-color: white;
             border-right: 1px solid #e9ecef;
             color: white;
         }
