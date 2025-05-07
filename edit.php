@@ -342,7 +342,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <button type="submit" class="submit-button">Update</button>
 
                 <p class="login-link">
-                    Return to <a href="./admin-dashboard.php">dashboard</a>
+                    Return to <a href="./manage-users.php">dashboard</a>
                 </p>
             </div>
         </form>
