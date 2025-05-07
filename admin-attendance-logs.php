@@ -501,6 +501,7 @@ HTML;
             padding: 15px;
             background-color: #337ab7;
             border-right: 1px solid #e9ecef;
+            color: white;
         }
 
         .log-column {
