@@ -755,15 +755,15 @@ mysqli_close($conn);
                                         // Output the log entry details using divs
                                         echo <<<HTML
                                             <div class="log-entry">
-                                                <div class="log-detail"><span class="detail-name">Name</span><span class="detail-separator"> | </span><span class="detail-value">{$display_name}</span></div>
-                                                <div class="log-detail"><span class="detail-name">Timestamp</span><span class="detail-separator"> | </span><span class="detail-value">{$timestamp_formatted}</span></div>
-                                                <div class="log-detail"><span class="detail-name">Type</span><span class="detail-separator"> | </span><span class="detail-value">{$row['log_type']}</span></div>
-                                                <div class="log-detail"><span class="detail-name">Device ID</span><span class="detail-separator"> | </span><span class="detail-value">{$device_id}</span></div>
-                                                <div class="log-detail"><span class="detail-name">Location</span><span class="detail-separator"> | </span><span class="detail-value">{$location_context}</span></div>
-                                                <div class="log-detail"><span class="detail-name">Method(s) Used</span><span class="detail-separator"> | </span><span class="detail-value">{$methods_used_text}</span></div>
-                                                <div class="log-detail"><span class="detail-name">Verification Details</span><span class="detail-separator"> | </span><span class="detail-value">{$verification_details_text}</span></div>
-                                                <div class="log-detail"><span class="detail-name">Access Granted</span><span class="detail-separator"> | </span><span class="detail-value"><span class="status {$status_class}">{$status_text}</span></span></div>
-                                                <div class="log-detail action-links"><span class="detail-name">Action</span><span class="detail-separator"> | </span><span class="detail-value"><a href="view_log_details.php?id={$attendance_log_id}" title="View Details">View</a> <a href="delete_log.php?id={$attendance_log_id}" class="delete-link" title="Delete Log" onclick="return confirm('Are you sure you want to delete this log entry?');">Delete</a></span></div>
+                                                <div class="log-detail"><span class="detail-name">Name</span><span class="detail-separator">  </span><span class="detail-value">{$display_name}</span></div>
+                                                <div class="log-detail"><span class="detail-name">Timestamp</span><span class="detail-separator">  </span><span class="detail-value">{$timestamp_formatted}</span></div>
+                                                <div class="log-detail"><span class="detail-name">Type</span><span class="detail-separator"> </span><span class="detail-value">{$row['log_type']}</span></div>
+                                                <div class="log-detail"><span class="detail-name">Device ID</span><span class="detail-separator">  </span><span class="detail-value">{$device_id}</span></div>
+                                                <div class="log-detail"><span class="detail-name">Location</span><span class="detail-separator">  </span><span class="detail-value">{$location_context}</span></div>
+                                                <div class="log-detail"><span class="detail-name">Method(s) Used</span><span class="detail-separator">  </span><span class="detail-value">{$methods_used_text}</span></div>
+                                                <div class="log-detail"><span class="detail-name">Verification Details</span><span class="detail-separator">  </span><span class="detail-value">{$verification_details_text}</span></div>
+                                                <div class="log-detail"><span class="detail-name">Access Granted</span><span class="detail-separator">  </span><span class="detail-value"><span class="status {$status_class}">{$status_text}</span></span></div>
+                                                <div class="log-detail action-links"><span class="detail-name">Action</span><span class="detail-separator">  </span><span class="detail-value"><a href="view_log_details.php?id={$attendance_log_id}" title="View Details">View</a> <a href="delete_log.php?id={$attendance_log_id}" class="delete-link" title="Delete Log" onclick="return confirm('Are you sure you want to delete this log entry?');">Delete</a></span></div>
                                             </div>
 HTML;
                                     }
