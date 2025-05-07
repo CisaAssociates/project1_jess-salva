@@ -2,9 +2,9 @@
 include("db_config.php");
 session_start();
 
-// Redirect if user data is not in session
+
 if (!isset($_SESSION['user_data'])) {
-    header("Location: index.php"); // Or your login page
+    header("Location: index.php"); 
     exit();
 }
 
@@ -16,20 +16,19 @@ $last_name = isset($_SESSION['user_data']['last_name']) ? $_SESSION['user_data']
 $role = isset($_SESSION['user_data']['role']) ? $_SESSION['user_data']['role'] : null;
 
 
-// Check if user has admin role
 if ($role !== "Admin") {
-    header("Location: index.php"); // Redirect non-admin users
+    header("Location: index.php");
     exit();
 }
 
 $conn = mysqli_connect($host, $user, $pass, $db);
 
-// Check connection
+
 if (!$conn) {
     die("Connection failed: " . mysqli_connect_error());
 }
 
-// --- Get User's RFID Card (remains the same, uses compatible syntax) ---
+
 $card_id = null;
 $sql_card = "SELECT card_id FROM rfidcards WHERE user_id = ?";
 $stmt_card = mysqli_prepare($conn, $sql_card);
@@ -48,30 +47,25 @@ if ($stmt_card) { // Check if statement prepared successfully
 
 
 // ...
-$filter_start_date = isset($_GET['start_date']) ? $_GET['start_date'] : ''; // around line 49
-$filter_end_date = isset($_GET['end_date']) ? $_GET['end_date'] : '';     // around line 50
+$filter_start_date = isset($_GET['start_date']) ? $_GET['start_date'] : ''; 
+$filter_end_date = isset($_GET['end_date']) ? $_GET['end_date'] : '';     
 
-// Basic validation (ensure they look like dates if provided)
-$filter_start_date = (preg_match("/^\d{4}-\d{2}-\d{2}$/", $filter_start_date)) ? $filter_start_date : ''; // around line 52
-$filter_end_date = (preg_match("/^\d{4}-\d{2}-\d{2}$/", $filter_end_date)) ? $filter_end_date : '';     // around line 53 -- Check this line in YOUR file!
 
-// --- Pagination Logic ---                                                                               // around line 54
-$limit = 100;                                                                                           // around line 55 -- This is line 55 in MY code, maybe it's different in yours
-// ...
-// --- Pagination Logic ---
-// Note: Pagination here applies to the total number of logs before splitting into IN/OUT
+$filter_start_date = (preg_match("/^\d{4}-\d{2}-\d{2}$/", $filter_start_date)) ? $filter_start_date : '';
+$filter_end_date = (preg_match("/^\d{4}-\d{2}-\d{2}$/", $filter_end_date)) ? $filter_end_date : '';     
+
+// --- Pagination Logic ---                                                                               
+$limit = 100;                                                                                           
 $limit = 100;
 $page = isset($_GET['page']) && is_numeric($_GET['page']) ? (int)$_GET['page'] : 1;
 $offset = ($page - 1) * $limit;
 
-// --- Base SQL Query Structure (Repurposed for attendance_logs) ---
-// This now queries the attendance_logs table and joins with users
+
 $sql_base = "
     FROM attendance_logs l
     LEFT JOIN users u ON l.user_id = u.user_id
 ";
 
-// --- Build Dynamic WHERE Clause & Parameters (Date Filtering) ---
 $where_clauses = [];
 $params = [];
 $param_types = "";
@@ -118,8 +112,7 @@ $total_records = mysqli_fetch_array($result_total)[0];
 $total_pages = ceil($total_records / $limit);
 mysqli_stmt_close($stmt_total);
 
-// --- Fetch Attendance Log Data (Repurposed query) ---
-// Selects all necessary columns from attendance_logs and joined users
+
 $sql_logs = "
     SELECT
         l.attendance_log_id,
@@ -146,19 +139,16 @@ if (!$stmt_logs) {
     die("Error preparing log data query: " . mysqli_error($conn) . " SQL: " . $sql_logs);
 }
 
-// Combine date params with pagination params
-$log_params = $params; // Start with date params
-$log_param_types = $param_types; // Start with date param types
 
-// Add pagination params
-$log_params[] = $limit; // Limit value
-$log_param_types .= "i"; // 'i' for integer
+$log_params = $params; 
+$log_param_types = $param_types; 
 
-$log_params[] = $offset; // Offset value
-$log_param_types .= "i"; // 'i' for integer
+$log_params[] = $limit;
+$log_param_types .= "i";
 
+$log_params[] = $offset; 
+$log_param_types .= "i"; 
 
-// Bind parameters using call_user_func_array (pass by reference)
 if (!empty($log_param_types)) {
     $a_params_logs = [];
     $a_params_logs[] = &$log_param_types;
@@ -172,7 +162,6 @@ if (!empty($log_param_types)) {
 mysqli_stmt_execute($stmt_logs);
 $result_logs = mysqli_stmt_get_result($stmt_logs);
 
-// --- Separate Logs into IN and OUT arrays ---
 $in_logs = [];
 $out_logs = [];
 if ($result_logs) {
@@ -186,18 +175,16 @@ if ($result_logs) {
 }
 
 
-// --- Build Base URL for Pagination ---
+
 $query_params = [];
 if (!empty($filter_start_date)) $query_params['start_date'] = $filter_start_date;
 if (!empty($filter_end_date)) $query_params['end_date'] = $filter_end_date;
-// Keep existing GET params when building pagination links
+
 $base_pagination_url = '?' . http_build_query($query_params);
 
-// Close statement and connection only after they are no longer needed
 if (isset($stmt_logs)) mysqli_stmt_close($stmt_logs);
 mysqli_close($conn);
 
-// The rest of your page content and HTML rendering would go here
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -473,7 +460,14 @@ mysqli_close($conn);
                         </a>
                     </li>
                     <li>
-                        <a href="./attendance-dashboard.php" class="nav-link active">
+                        <a href="./admin-gatepass-logs.php" class="nav-link active">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg> <span>Filtered Logs</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="./admin-attendance-logs.php" class="nav-link active">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg> <span>Attendance Logs</span>
