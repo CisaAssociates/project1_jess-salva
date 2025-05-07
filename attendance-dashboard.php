@@ -301,7 +301,7 @@ $base_pagination_url = '?' . http_build_query($query_params);
                             <path fill-rule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />
                         </svg>
                     </button>
-                    <span class="dashboard-title"> Attendance Dashboard</span>
+                    <span class="dashboard-title"> Gate pass Logs Dashboard</span>
                 </div>
                 <div class="navbar-right">
                     <div class="user-info">
