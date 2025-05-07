@@ -408,9 +408,9 @@ mysqli_close($conn);
             /* Space between separator and value */
         }
 
-        .detail-value {
-            /* Add specific styles for the value if needed */
-        }
+        /* Add specific styles for the value if needed */
+        /* .detail-value {
+        } */
 
         /* Style for the 'No logs found' message */
         .no-logs-message {
