@@ -194,8 +194,235 @@ mysqli_close($conn);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Attendance Logs Dashboard</title>
     <link rel="stylesheet" href="./styles/style.css">
-
+    <link rel="stylesheet" href="./styles/admin-dashboard.css">
     <style>
+        /* Existing styles for pagination, status, filter form, etc. */
+        .pagination {
+            margin-top: 1.5rem;
+            text-align: center;
+        }
+
+        .pagination a,
+        .pagination span {
+            display: inline-block;
+            padding: 0.5rem 0.8rem;
+            margin: 0 0.2rem;
+            border: 1px solid #ddd;
+            color: #337ab7;
+            text-decoration: none;
+            border-radius: 4px;
+            background-color: #fff;
+        }
+
+        .pagination a:hover {
+            background-color: #eee;
+        }
+
+        .pagination .current-page {
+            font-weight: bold;
+            color: #fff;
+            background-color: #337ab7;
+            border-color: #337ab7;
+            cursor: default;
+        }
+
+        .pagination .disabled {
+            color: #777;
+            cursor: default;
+            background-color: #f9f9f9;
+            border-color: #ddd;
+        }
+
+        /* Style for status spans */
+        .status {
+            padding: 0.2em 0.6em;
+            border-radius: 0.25em;
+            font-size: 0.85em;
+            font-weight: bold;
+            color: #fff;
+            white-space: nowrap;
+        }
+
+        .status-granted {
+            background-color: #5cb85c;
+            /* Green */
+        }
+
+        .status-denied {
+            background-color: #d9534f;
+            /* Red */
+        }
+
+        .status-unknown {
+            background-color: #777;
+            /* Gray */
+        }
+
+        .action-links a {
+            margin-right: 0.5rem;
+            color: #337ab7;
+            text-decoration: none;
+        }
+
+        .action-links a:hover {
+            text-decoration: underline;
+        }
+
+        .action-links .delete-link {
+            color: #d9534f;
+            /* Red */
+        }
+
+        .action-links .delete-link:hover {
+            color: #c9302c;
+        }
+
+        /* Styles for Filter Form */
+        .filter-form {
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background-color: #f9f9f9;
+            border: 1px solid #eee;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+            /* Allow wrapping on smaller screens */
+        }
+
+        .filter-form label {
+            font-weight: bold;
+            margin-right: 0.5rem;
+        }
+
+        .filter-form input[type="date"] {
+            padding: 0.4rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .filter-form button {
+            padding: 0.5rem 1rem;
+            background-color: #337ab7;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .filter-form button:hover {
+            background-color: #286090;
+        }
+
+        .filter-form .clear-filter-link {
+            padding: 0.5rem 1rem;
+            background-color: #f0ad4e;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 0.9em;
+            /* Match button size roughly */
+            display: inline-block;
+            /* Make it behave like a button */
+            text-align: center;
+            line-height: normal;
+            /* Adjust line height if needed */
+        }
+
+        .filter-form .clear-filter-link:hover {
+            background-color: #ec971f;
+        }
+
+        /* --- Styles for Side-by-Side Sections and Log Entries --- */
+        .attendance-tables-container {
+            display: flex;
+            /* Use Flexbox to arrange sections side-by-side */
+            gap: 20px;
+            /* Space between the sections */
+            flex-wrap: wrap;
+            /* Allow sections to wrap on smaller screens */
+        }
+
+        .attendance-table-wrapper {
+            flex: 1;
+            /* Allow sections to grow and shrink */
+            min-width: 300px;
+            /* Minimum width before wrapping */
+            background-color: #fff;
+            /* White background for each section */
+            padding: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+            /* Space below sections */
+        }
+
+        .attendance-table-wrapper h3 {
+            margin-top: 0;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Style for individual log entries */
+        .log-entry {
+            margin-bottom: 1rem;
+            /* Space after each log entry */
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #eee;
+            /* Separator line */
+        }
+
+        .log-entry:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+            /* No border after the last entry */
+        }
+
+        /* Style for each detail line (column name | value) */
+        .log-detail {
+            margin-bottom: 0.4rem;
+            /* Space between detail lines */
+            /* You can use Flexbox here for alignment if needed, e.g., */
+            /* display: flex; */
+            /* align-items: baseline; */
+        }
+
+        .detail-name {
+            font-weight: bold;
+            margin-right: 0.5rem;
+            /* Space between name and separator */
+        }
+
+        /* Optional: Style for the separator */
+        .detail-name::after {
+            content: " |";
+            /* Add the separator after the name */
+            font-weight: normal;
+            /* Don't bold the separator */
+            margin-left: 0.5rem;
+            /* Space between separator and value */
+        }
+
+        .detail-value {
+            /* Add specific styles for the value if needed */
+        }
+
+        /* Style for the 'No logs found' message */
+        .no-logs-message {
+            text-align: center;
+            padding: 1rem;
+            font-style: italic;
+            color: #777;
+        }
+
+        css
+
         /* Enhanced Table Styles for Log Entries */
         .attendance-table-wrapper {
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -347,6 +574,8 @@ mysqli_close($conn);
                 padding-left: 8px;
             }
         }
+
+        
     </style>
 </head>
 
