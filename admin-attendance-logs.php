@@ -54,11 +54,21 @@ $filter_end_date = isset($_GET['end_date']) ? $_GET['end_date'] : '';
 $filter_start_date = (preg_match("/^\d{4}-\d{2}-\d{2}$/", $filter_start_date)) ? $filter_start_date : '';
 $filter_end_date = (preg_match("/^\d{4}-\d{2}-\d{2}$/", $filter_end_date)) ? $filter_end_date : '';
 
-// --- Pagination Logic ---                                                                               
-$limit = 100;
+// --- Pagination Logic ---
 $limit = 100;
 $page = isset($_GET['page']) && is_numeric($_GET['page']) ? (int)$_GET['page'] : 1;
 $offset = ($page - 1) * $limit;
+
+// Construct the base URL for pagination links while preserving filters
+$base_pagination_url = '?';
+if (!empty($filter_start_date)) {
+    $base_pagination_url .= 'start_date=' . urlencode($filter_start_date) . '&';
+}
+if (!empty($filter_end_date)) {
+    $base_pagination_url .= 'end_date=' . urlencode($filter_end_date) . '&';
+}
+// Remove trailing '&' if no filters were applied
+$base_pagination_url = rtrim($base_pagination_url, '&');
 
 
 $sql_base = "
@@ -88,7 +98,7 @@ if (!empty($where_clauses)) {
 }
 
 // --- Calculate Total Records (for pagination, uses the new base and where) ---
-$sql_total = "SELECT COUNT(*) " . $sql_base . $sql_where;
+$sql_total = "SELECT COUNT(DISTINCT l.user_id, DATE(l.timestamp)) " . $sql_base . $sql_where; // Count distinct user+date entries
 $stmt_total = mysqli_prepare($conn, $sql_total);
 
 if (!$stmt_total) {
@@ -108,6 +118,7 @@ if (!empty($params)) {
 
 mysqli_stmt_execute($stmt_total);
 $result_total = mysqli_stmt_get_result($stmt_total);
+// Fetch the count correctly - using mysqli_fetch_array with index 0
 $total_records = mysqli_fetch_array($result_total)[0];
 $total_pages = ceil($total_records / $limit);
 mysqli_stmt_close($stmt_total);
@@ -130,8 +141,8 @@ $sql_logs = "
         u.email,
         u.role
     " . $sql_base . $sql_where . "
-    ORDER BY l.timestamp DESC
-    LIMIT ? OFFSET ?"; // Order by timestamp for chronological log display
+    ORDER BY u.last_name ASC, u.first_name ASC, l.timestamp ASC -- Order by user then date/time for processing
+    LIMIT ? OFFSET ?";
 
 $stmt_logs = mysqli_prepare($conn, $sql_logs);
 
@@ -162,10 +173,6 @@ if (!empty($log_param_types)) {
 mysqli_stmt_execute($stmt_logs);
 $result_logs = mysqli_stmt_get_result($stmt_logs);
 
-
-// Reset arrays
-$in_logs = [];
-$out_logs = [];
 
 // Create associative arrays to organize logs by user and date
 $user_logs = [];
@@ -212,19 +219,20 @@ if ($result_logs) {
     }
 }
 
-// Sort logs by date (newest first) and then by name
+// Sort logs by user name (ascending) and then by date (ascending)
 usort($user_logs, function ($a, $b) {
-    // First sort by date (descending)
-    $date_diff = strtotime($b['date']) - strtotime($a['date']);
-    if ($date_diff !== 0) {
-        return $date_diff;
-    }
-
-    // If same date, sort by name
+    // First sort by name (ascending)
     $name_a = $a['last_name'] . ', ' . $a['first_name'];
     $name_b = $b['last_name'] . ', ' . $b['first_name'];
-    return strcmp($name_a, $name_b);
+    $name_compare = strcmp($name_a, $name_b);
+    if ($name_compare !== 0) {
+        return $name_compare;
+    }
+
+    // If same name, sort by date (ascending)
+    return strtotime($a['date']) - strtotime($b['date']);
 });
+
 
 // Function to format log display
 function formatLogDetails($log)
@@ -239,9 +247,10 @@ function formatLogDetails($log)
 
     // Determine Method(s) Used
     $methods_used_list = [];
+    // Check if face recognition data exists (not NULL for face_recognized or confidence_score)
     if (
-        isset($log['face_recognized']) && $log['face_recognized'] !== NULL ||
-        isset($log['confidence_score']) && $log['confidence_score'] !== NULL
+        (isset($log['face_recognized']) && $log['face_recognized'] !== NULL) ||
+        (isset($log['confidence_score']) && $log['confidence_score'] !== NULL)
     ) {
         $methods_used_list[] = 'Face';
     }
@@ -258,11 +267,11 @@ function formatLogDetails($log)
             $verification_details_list[] = '(' . htmlspecialchars(number_format($log['confidence_score'], 2)) . '%)';
         }
     } elseif (isset($log['face_recognized']) && $log['face_recognized'] === FALSE) {
-        if (isset($log['confidence_score']) && $log['confidence_score'] !== NULL) {
+         if (isset($log['confidence_score']) && $log['confidence_score'] !== NULL) {
             $verification_details_list[] = 'Face: Not Recognized (' .
                 htmlspecialchars(number_format($log['confidence_score'], 2)) . '%)';
         } else {
-            $verification_details_list[] = 'Face: Attempted';
+            $verification_details_list[] = 'Face: Attempted'; // Or just leave empty if no score for failed attempts
         }
     }
 
@@ -270,6 +279,7 @@ function formatLogDetails($log)
         $verification_details_list[] = 'RFID: ' . htmlspecialchars($log['rfid_card_id_used']);
     }
     $verification_details_text = empty($verification_details_list) ? 'N/A' : implode(' ', $verification_details_list);
+
 
     // Determine Access Granted Status Display
     $access_granted = isset($log['access_granted']) ? $log['access_granted'] : FALSE;
@@ -288,8 +298,8 @@ function formatLogDetails($log)
             <div class="log-detail"><span class="detail-name">Verification</span><span class="detail-value">{$verification_details_text}</span></div>
             <div class="log-detail"><span class="detail-name">Status</span><span class="detail-value"><span class="status {$status_class}">{$status_text}</span></span></div>
             <div class="log-detail action-links"><span class="detail-name">Action</span><span class="detail-value">
-                <a href="view_log_details.php?id={$attendance_log_id}" title="View Details">View</a> 
-                <a href="delete_log.php?id={$attendance_log_id}" class="delete-link" title="Delete Log" 
+                <a href="view_log_details.php?id={$attendance_log_id}" title="View Details">View</a>
+                <a href="delete_log.php?id={$attendance_log_id}" class="delete-link" title="Delete Log"
                    onclick="return confirm('Are you sure you want to delete this log entry?');">Delete</a>
             </span></div>
         </div>
@@ -347,8 +357,8 @@ HTML;
                             <span>Main Dashboard</span>
                         </a>
                     </li>
-                    <li>
-                        <a href="./admin-gatepass-logs.php" class="nav-link active">
+                     <li>
+                        <a href="./admin-gatepass-logs.php" class="nav-link">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg> <span>Filtered Logs</span>
@@ -402,7 +412,7 @@ HTML;
                                 </svg>
                             </div>
                             <div class="stats-text">
-                                <p>Filtered Attendance Logs (Total)</p>
+                                <p>Filtered Attendance Logs (Daily Summary)</p>
                                 <p><?= $total_records ?></p>
                             </div>
                         </div>
@@ -434,8 +444,7 @@ HTML;
                     </div>
 
                     <div class="attendance-tables-container">
-                        <div class="attendance-table">
-                            <div class="attendance-header">
+                        <div class="attendance-table" id="attendance-table"> <div class="attendance-header">
                                 <div class="user-info-column">Student Details</div>
                                 <div class="log-column">IN Record</div>
                                 <div class="log-column">OUT Record</div>
@@ -495,7 +504,8 @@ HTML;
                                     }
                                 } elseif (($i == $start_range - 1) || ($i == $end_range + 1)) {
                                     // Print ellipsis if there's a gap (only once between segments)
-                                    if (($i == $start_range - 1 && $start_range > 2) || ($i == $end_range + 1 && $end_range < $total_pages - 1)) {
+                                    // Avoid printing ellipsis if the gap is only one page wide
+                                     if (($i == $start_range - 1 && $start_range > 2) || ($i == $end_range + 1 && $end_range < $total_pages - 1)) {
                                         echo '<span>...</span>';
                                     }
                                 }
@@ -516,18 +526,12 @@ HTML;
     </div>
     <script>
         // JavaScript for sidebar and loading indicator remains the same.
-        // Client-side search needs significant adjustment to target the new div structure.
-        // A full client-side search on this structure can be complex.
-        // For this modification, the search will target the text content within the .log-entry divs.
-
         document.addEventListener('DOMContentLoaded', () => {
             const hamburgerButton = document.getElementById('hamburger-button');
             const sidebar = document.getElementById('sidebar');
             const errorDisplay = document.getElementById('error-display'); // Assuming this element exists for errors
             const searchInput = document.getElementById('searchInput');
-            const inLogList = document.getElementById('inLogList'); // Get IN log list container
-            const outLogList = document.getElementById('outLogList'); // Get OUT log list container
-
+            const attendanceTable = document.getElementById('attendance-table'); // Get the table container
 
             // --- Sidebar Toggle ---
             if (hamburgerButton && sidebar) {
@@ -536,28 +540,22 @@ HTML;
                 });
             }
 
-            // --- Client-Side Search/Filter (searches both lists on current page) ---
-            if (searchInput && (inLogList || outLogList)) { // Check if at least one log list container exists
+            // --- Client-Side Search/Filter ---
+            if (searchInput && attendanceTable) {
                 searchInput.addEventListener('input', () => {
                     const searchTerm = searchInput.value.toLowerCase().trim();
+                    // Target the attendance-row divs
+                    const logEntries = attendanceTable.querySelectorAll('.attendance-row');
 
-                    // Get all log entry divs from both lists
-                    const inLogEntries = inLogList ? inLogList.querySelectorAll('.log-entry') : [];
-                    const outLogEntries = outLogList ? outLogList.querySelectorAll('.log-entry') : [];
-                    const allLogEntries = [...inLogEntries, ...outLogEntries]; // Combine them
-
-
-                    allLogEntries.forEach(logEntryDiv => {
-                        const logEntryText = logEntryDiv.textContent.toLowerCase();
-                        if (logEntryText.includes(searchTerm)) {
-                            logEntryDiv.style.display = ''; // Show the log entry div
+                    logEntries.forEach(row => {
+                        // Search within the text content of the entire row
+                        const rowText = row.textContent.toLowerCase();
+                        if (rowText.includes(searchTerm)) {
+                            row.style.display = ''; // Show the row
                         } else {
-                            logEntryDiv.style.display = 'none'; // Hide the log entry div
+                            row.style.display = 'none'; // Hide the row
                         }
                     });
-
-                    // You might also want to hide the "No logs found" messages if search results are found.
-                    // This adds complexity and is often better handled server-side for large datasets.
                 });
             }
 
@@ -582,8 +580,8 @@ HTML;
             // --- Close sidebar on outside click (small screens) ---
             // Assuming your existing implementation for this
             document.addEventListener('click', (event) => {
-                // Add logic to close sidebar if click is outside sidebar and hamburger
-                // e.g., if sidebar is open AND !sidebar.contains(event.target) AND !hamburgerButton.contains(event.target)
+                 // Add logic to close sidebar if click is outside sidebar and hamburger
+                 // e.g., if sidebar is open AND !sidebar.contains(event.target) AND !hamburgerButton.contains(event.target)
             });
 
 
