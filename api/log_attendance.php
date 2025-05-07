@@ -3,14 +3,6 @@ header('Content-Type: application/json'); // Indicate that the response is JSON
 
 include '../db_config.php';
 
-// --- Database connection details (REPLACE WITH YOUR ACTUAL DETAILS) ---
-// You need to set up your MySQL database and user credentials here.
-$host = "localhost"; // Database server address (usually localhost if on the same server)
-$user = "your_db_username"; // Your database username
-$pass = "your_db_password"; // Your database password
-$db = "your_db_name";     // The name of your database (where attendance_logs table is)
-// ---------------------------------------------------------------------
-
 // Get the raw POST data from the request body
 $json_data = file_get_contents('php://input');
 // Decode the JSON data into a PHP associative array
