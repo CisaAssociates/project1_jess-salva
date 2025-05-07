@@ -1,0 +1,368 @@
+  /* Existing styles for pagination, status, filter form, etc. */
+  .pagination {
+    margin-top: 1.5rem;
+    text-align: center;
+}
+
+.pagination a,
+.pagination span {
+    display: inline-block;
+    padding: 0.5rem 0.8rem;
+    margin: 0 0.2rem;
+    border: 1px solid #ddd;
+    color: #337ab7;
+    text-decoration: none;
+    border-radius: 4px;
+    background-color: #fff;
+}
+
+.pagination a:hover {
+    background-color: #eee;
+}
+
+.pagination .current-page {
+    font-weight: bold;
+    color: #fff;
+    background-color: #337ab7;
+    border-color: #337ab7;
+    cursor: default;
+}
+
+.pagination .disabled {
+    color: #777;
+    cursor: default;
+    background-color: #f9f9f9;
+    border-color: #ddd;
+}
+
+/* Style for status spans */
+.status {
+    padding: 0.2em 0.6em;
+    border-radius: 0.25em;
+    font-size: 0.85em;
+    font-weight: bold;
+    color: #fff;
+    white-space: nowrap;
+}
+
+.status-granted {
+    background-color: #5cb85c;
+    /* Green */
+}
+
+.status-denied {
+    background-color: #d9534f;
+    /* Red */
+}
+
+.status-unknown {
+    background-color: #777;
+    /* Gray */
+}
+
+.action-links a {
+    margin-right: 0.5rem;
+    color: #337ab7;
+    text-decoration: none;
+}
+
+.action-links a:hover {
+    text-decoration: underline;
+}
+
+.action-links .delete-link {
+    color: #d9534f;
+    /* Red */
+}
+
+.action-links .delete-link:hover {
+    color: #c9302c;
+}
+
+/* Styles for Filter Form */
+.filter-form {
+    margin-bottom: 1rem;
+    padding: 1rem;
+    background-color: #f9f9f9;
+    border: 1px solid #eee;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    /* Allow wrapping on smaller screens */
+}
+
+.filter-form label {
+    font-weight: bold;
+    margin-right: 0.5rem;
+}
+
+.filter-form input[type="date"] {
+    padding: 0.4rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.filter-form button {
+    padding: 0.5rem 1rem;
+    background-color: #337ab7;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.filter-form button:hover {
+    background-color: #286090;
+}
+
+.filter-form .clear-filter-link {
+    padding: 0.5rem 1rem;
+    background-color: #f0ad4e;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 0.9em;
+    /* Match button size roughly */
+    display: inline-block;
+    /* Make it behave like a button */
+    text-align: center;
+    line-height: normal;
+    /* Adjust line height if needed */
+}
+
+.filter-form .clear-filter-link:hover {
+    background-color: #ec971f;
+}
+
+/* Synchronized Attendance Table Styles */
+.attendance-tables-container {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.attendance-table {
+    width: 100%;
+    background: white;
+}
+
+/* Header styles */
+.attendance-header {
+    display: flex;
+    background-color: #337ab7;
+    color: white;
+    font-weight: bold;
+    border-bottom: 2px solid #2e6da4;
+}
+
+.attendance-header>div {
+    padding: 15px;
+    text-align: center;
+}
+
+/* Row styles */
+.attendance-row {
+    display: flex;
+    border-bottom: 1px solid #e9ecef;
+    transition: background-color 0.2s;
+}
+
+.attendance-row:hover {
+    background-color: #f8f9fa;
+}
+
+.attendance-row:last-child {
+    border-bottom: none;
+}
+
+/* Column styles */
+.user-info-column {
+    flex: 0 0 20%;
+    padding: 15px;
+    background-color: #337ab7;
+    border-right: 1px solid #e9ecef;
+    color: white;
+}
+
+.log-column {
+    flex: 0 0 40%;
+    padding: 15px;
+}
+
+.in-log {
+    border-right: 1px solid #e9ecef;
+}
+
+/* User info styles */
+.user-name {
+    font-weight: bold;
+    font-size: 1.1em;
+    margin-bottom: 5px;
+    color: white;
+}
+
+.user-date {
+    font-weight: 500;
+    color: white;
+    margin-bottom: 10px;
+}
+
+.user-detail {
+    font-size: 0.9em;
+    color: white;
+    margin-bottom: 3px;
+}
+
+/* Log details styling */
+.log-details {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.log-detail {
+    display: flex;
+    line-height: 1.4;
+}
+
+.detail-name {
+    flex: 0 0 100px;
+    font-weight: 600;
+    color: #495057;
+    border-right: 1px solid #e0e0e0;
+    padding-right: 10px;
+    margin-right: 10px;
+}
+
+.detail-value {
+    flex: 1;
+    color: #212529;
+}
+
+/* Status styles */
+.status {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.85em;
+    font-weight: 500;
+    display: inline-block;
+}
+
+.status-granted {
+    background-color: #28a745;
+    color: white;
+}
+
+.status-denied {
+    background-color: #dc3545;
+    color: white;
+}
+
+/* Action links */
+.action-links a {
+    display: inline-block;
+    margin-right: 12px;
+    color: #007bff;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.action-links a:hover {
+    text-decoration: underline;
+}
+
+.action-links .delete-link {
+    color: #dc3545;
+}
+
+/* No logs message */
+.no-logs-message {
+    padding: 20px;
+    text-align: center;
+    color: #6c757d;
+    font-style: italic;
+    background-color: white;
+}
+
+/* No log details message */
+.no-log-details {
+    padding: 15px;
+    text-align: center;
+    color: #6c757d;
+    font-style: italic;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    border: 1px dashed #dee2e6;
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+    .attendance-row {
+        flex-direction: column;
+    }
+
+    .user-info-column,
+    .log-column {
+        flex: 1;
+        width: 100%;
+        border-right: none;
+    }
+
+    .user-info-column {
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .in-log {
+        border-right: none;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .attendance-header {
+        display: none;
+        /* Hide header on mobile */
+    }
+
+    /* Label columns on mobile */
+    .in-log::before,
+    .out-log::before {
+        display: block;
+        font-weight: bold;
+        margin-bottom: 10px;
+        color: #495057;
+    }
+
+    .in-log::before {
+        content: "IN Record";
+    }
+
+    .out-log::before {
+        content: "OUT Record";
+    }
+}
+
+@media (max-width: 576px) {
+    .log-detail {
+        flex-direction: column;
+    }
+
+    .detail-name {
+        flex: none;
+        margin-bottom: 4px;
+        border-right: none;
+        border-bottom: 1px solid #e0e0e0;
+        padding-bottom: 4px;
+        margin-right: 0;
+    }
+
+    .detail-value {
+        padding-top: 4px;
+    }
+}
