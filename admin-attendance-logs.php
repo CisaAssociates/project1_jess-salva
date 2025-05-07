@@ -806,7 +806,7 @@ HTML;
                     <div class="attendance-tables-container">
                         <div class="attendance-table">
                             <div class="attendance-header">
-                                <div class="user-info-column">Employee Details</div>
+                                <div class="user-info-column">Student Details</div>
                                 <div class="log-column">IN Record</div>
                                 <div class="log-column">OUT Record</div>
                             </div>
