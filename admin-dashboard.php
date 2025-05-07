@@ -300,7 +300,7 @@ $base_pagination_url = '?' . http_build_query($query_params);
                     </li>
                     <li>
                         <a href="./attendance-dashboard.php" class="nav-link ">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg> <span>Attendance Logs</span>
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg> <span>Filtered Logs</span>
                         </a>
                     </li>
                     <li>
@@ -318,7 +318,7 @@ $base_pagination_url = '?' . http_build_query($query_params);
 
                 <div class="content-grid">
                    <div class="card">
-                        <h2>Attendance Overview</h2> <p>View all recorded attendance logs.</p>
+                        <h2>Attendance Overview</h2> <p>View all recorded filtered logs.</p>
                     </div>
                      <div class="card">
                         <h2>Quick Stats</h2>
@@ -336,7 +336,7 @@ $base_pagination_url = '?' . http_build_query($query_params);
                                 <svg class="w-6 h-6" fill="none" stroke="var(--text-green-500)" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                             </div>
                             <div class="stats-text">
-                                <p>Filtered Attendance Logs (Total)</p>
+                                <p>Filtered Logs (Total)</p>
                                 <p><?= $total_records ?></p>
                             </div>
                         </div>
@@ -415,7 +415,7 @@ $base_pagination_url = '?' . http_build_query($query_params);
                                 }
                             } else {
                                 // Message reflects potential filtering
-                                echo '<tr><td colspan="5" style="text-align: center; padding: 1rem;">No attendance logs found for the selected criteria.</td></tr>';
+                                echo '<tr><td colspan="5" style="text-align: center; padding: 1rem;">No filtered logs found for the selected criteria.</td></tr>';
                             }
                             // Close statement and connection
                             if (isset($stmt_logs)) mysqli_stmt_close($stmt_logs);
