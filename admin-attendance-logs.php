@@ -162,30 +162,144 @@ if (!empty($log_param_types)) {
 mysqli_stmt_execute($stmt_logs);
 $result_logs = mysqli_stmt_get_result($stmt_logs);
 
+
+// Reset arrays
 $in_logs = [];
 $out_logs = [];
+
+// Create associative arrays to organize logs by user and date
+$user_logs = [];
+
 if ($result_logs) {
     while ($row = mysqli_fetch_assoc($result_logs)) {
+        // Create a date key for grouping logs by day - this helps match IN/OUT per day
+        $log_date = date("Y-m-d", strtotime($row['timestamp']));
+
+        // Create a unique key for each user per day
+        $user_day_key = $row['user_id'] . '_' . $log_date;
+
+        // Initialize the user's entry for this day if needed
+        if (!isset($user_logs[$user_day_key])) {
+            $user_logs[$user_day_key] = [
+                'user_id' => $row['user_id'],
+                'first_name' => $row['first_name'],
+                'last_name' => $row['last_name'],
+                'email' => $row['email'],
+                'role' => $row['role'],
+                'date' => $log_date,
+                'in_log' => null,
+                'out_log' => null
+            ];
+        }
+
+        // Store the log in the appropriate slot (in or out)
+        // If multiple logs of same type exist for same day, use the earliest IN and latest OUT
         if ($row['log_type'] === 'in') {
-            $in_logs[] = $row;
+            if (
+                is_null($user_logs[$user_day_key]['in_log']) ||
+                strtotime($row['timestamp']) < strtotime($user_logs[$user_day_key]['in_log']['timestamp'])
+            ) {
+                $user_logs[$user_day_key]['in_log'] = $row;
+            }
         } elseif ($row['log_type'] === 'out') {
-            $out_logs[] = $row;
+            if (
+                is_null($user_logs[$user_day_key]['out_log']) ||
+                strtotime($row['timestamp']) > strtotime($user_logs[$user_day_key]['out_log']['timestamp'])
+            ) {
+                $user_logs[$user_day_key]['out_log'] = $row;
+            }
         }
     }
 }
 
+// Sort logs by date (newest first) and then by name
+usort($user_logs, function ($a, $b) {
+    // First sort by date (descending)
+    $date_diff = strtotime($b['date']) - strtotime($a['date']);
+    if ($date_diff !== 0) {
+        return $date_diff;
+    }
 
+    // If same date, sort by name
+    $name_a = $a['last_name'] . ', ' . $a['first_name'];
+    $name_b = $b['last_name'] . ', ' . $b['first_name'];
+    return strcmp($name_a, $name_b);
+});
 
-$query_params = [];
-if (!empty($filter_start_date)) $query_params['start_date'] = $filter_start_date;
-if (!empty($filter_end_date)) $query_params['end_date'] = $filter_end_date;
+// Function to format log display
+function formatLogDetails($log)
+{
+    if (!$log) {
+        return '<div class="no-log-details">No details available</div>';
+    }
 
-$base_pagination_url = '?' . http_build_query($query_params);
+    $timestamp_formatted = date("M j, Y, g:i A", strtotime($log['timestamp']));
+    $device_id = htmlspecialchars($log['device_id']);
+    $location_context = isset($log['location_context']) ? htmlspecialchars($log['location_context']) : 'N/A';
 
-if (isset($stmt_logs)) mysqli_stmt_close($stmt_logs);
-mysqli_close($conn);
+    // Determine Method(s) Used
+    $methods_used_list = [];
+    if (
+        isset($log['face_recognized']) && $log['face_recognized'] !== NULL ||
+        isset($log['confidence_score']) && $log['confidence_score'] !== NULL
+    ) {
+        $methods_used_list[] = 'Face';
+    }
+    if (isset($log['rfid_card_id_used']) && $log['rfid_card_id_used'] !== NULL) {
+        $methods_used_list[] = 'RFID';
+    }
+    $methods_used_text = empty($methods_used_list) ? 'N/A' : implode(', ', $methods_used_list);
 
+    // Determine Verification Details
+    $verification_details_list = [];
+    if (isset($log['face_recognized']) && $log['face_recognized'] === TRUE) {
+        $verification_details_list[] = 'Face: Recognized';
+        if (isset($log['confidence_score']) && $log['confidence_score'] !== NULL) {
+            $verification_details_list[] = '(' . htmlspecialchars(number_format($log['confidence_score'], 2)) . '%)';
+        }
+    } elseif (isset($log['face_recognized']) && $log['face_recognized'] === FALSE) {
+        if (isset($log['confidence_score']) && $log['confidence_score'] !== NULL) {
+            $verification_details_list[] = 'Face: Not Recognized (' .
+                htmlspecialchars(number_format($log['confidence_score'], 2)) . '%)';
+        } else {
+            $verification_details_list[] = 'Face: Attempted';
+        }
+    }
+
+    if (isset($log['rfid_card_id_used']) && $log['rfid_card_id_used'] !== NULL) {
+        $verification_details_list[] = 'RFID: ' . htmlspecialchars($log['rfid_card_id_used']);
+    }
+    $verification_details_text = empty($verification_details_list) ? 'N/A' : implode(' ', $verification_details_list);
+
+    // Determine Access Granted Status Display
+    $access_granted = isset($log['access_granted']) ? $log['access_granted'] : FALSE;
+    $status_text = $access_granted ? 'Granted' : 'Denied';
+    $status_class = $access_granted ? 'status-granted' : 'status-denied';
+
+    // Get attendance log ID for action links
+    $attendance_log_id = $log['attendance_log_id'];
+
+    $output = <<<HTML
+        <div class="log-details">
+            <div class="log-detail"><span class="detail-name">Time</span><span class="detail-value">{$timestamp_formatted}</span></div>
+            <div class="log-detail"><span class="detail-name">Device ID</span><span class="detail-value">{$device_id}</span></div>
+            <div class="log-detail"><span class="detail-name">Location</span><span class="detail-value">{$location_context}</span></div>
+            <div class="log-detail"><span class="detail-name">Method(s)</span><span class="detail-value">{$methods_used_text}</span></div>
+            <div class="log-detail"><span class="detail-name">Verification</span><span class="detail-value">{$verification_details_text}</span></div>
+            <div class="log-detail"><span class="detail-name">Status</span><span class="detail-value"><span class="status {$status_class}">{$status_text}</span></span></div>
+            <div class="log-detail action-links"><span class="detail-name">Action</span><span class="detail-value">
+                <a href="view_log_details.php?id={$attendance_log_id}" title="View Details">View</a> 
+                <a href="delete_log.php?id={$attendance_log_id}" class="delete-link" title="Delete Log" 
+                   onclick="return confirm('Are you sure you want to delete this log entry?');">Delete</a>
+            </span></div>
+        </div>
+HTML;
+
+    return $output;
+}
 ?>
+
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -337,146 +451,101 @@ mysqli_close($conn);
             background-color: #ec971f;
         }
 
-        /* --- Styles for Side-by-Side Sections and Log Entries --- */
+        /* Synchronized Attendance Table Styles */
         .attendance-tables-container {
             display: flex;
-            /* Use Flexbox to arrange sections side-by-side */
-            gap: 20px;
-            /* Space between the sections */
-            flex-wrap: wrap;
-            /* Allow sections to wrap on smaller screens */
-        }
-
-        .attendance-table-wrapper {
-            flex: 1;
-            /* Allow sections to grow and shrink */
-            min-width: 300px;
-            /* Minimum width before wrapping */
-            background-color: #fff;
-            /* White background for each section */
-            padding: 1rem;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            margin-bottom: 1rem;
-            /* Space below sections */
-        }
-
-        .attendance-table-wrapper h3 {
-            margin-top: 0;
-            border-bottom: 2px solid #eee;
-            padding-bottom: 0.5rem;
-            margin-bottom: 1rem;
-        }
-
-        /* Style for individual log entries */
-        .log-entry {
-            margin-bottom: 1rem;
-            /* Space after each log entry */
-            padding-bottom: 1rem;
-            border-bottom: 1px solid #eee;
-            /* Separator line */
-        }
-
-        .log-entry:last-child {
-            margin-bottom: 0;
-            padding-bottom: 0;
-            border-bottom: none;
-            /* No border after the last entry */
-        }
-
-        /* Style for each detail line (column name | value) */
-        .log-detail {
-            margin-bottom: 0.4rem;
-            /* Space between detail lines */
-            /* You can use Flexbox here for alignment if needed, e.g., */
-            /* display: flex; */
-            /* align-items: baseline; */
-        }
-
-        .detail-name {
-            font-weight: bold;
-            margin-right: 0.5rem;
-            /* Space between name and separator */
-        }
-
-        /* Optional: Style for the separator */
-        .detail-name::after {
-            /* Add the separator after the name */
-            font-weight: normal;
-            /* Don't bold the separator */
-            margin-left: 0.5rem;
-            /* Space between separator and value */
-        }
-
-        /* Add specific styles for the value if needed */
-        /* .detail-value {
-        } */
-
-        /* Style for the 'No logs found' message */
-        .no-logs-message {
-            text-align: center;
-            padding: 1rem;
-            font-style: italic;
-            color: #777;
-        }
-
-
-        /* Enhanced Table Styles for Log Entries */
-        .attendance-table-wrapper {
+            flex-direction: column;
+            margin-bottom: 2rem;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             border-radius: 8px;
             overflow: hidden;
-            margin-bottom: 1.5rem;
         }
 
-        .attendance-table-wrapper h3 {
+        .attendance-table {
+            width: 100%;
+            background: white;
+        }
+
+        /* Header styles */
+        .attendance-header {
+            display: flex;
             background-color: #337ab7;
             color: white;
-            margin-top: 0;
-            padding: 15px;
-            border-bottom: none;
-            font-size: 1.2rem;
-            border-radius: 8px 8px 0 0;
+            font-weight: bold;
+            border-bottom: 2px solid #2e6da4;
         }
 
-        /* Main log container */
-        .log-list {
-            padding: 0;
-            max-height: 600px;
-            overflow-y: auto;
+        .attendance-header>div {
+            padding: 15px;
+            text-align: center;
         }
 
-        /* Individual log entry styling */
-        .log-entry {
-            padding: 15px;
-            margin-bottom: 0;
+        /* Row styles */
+        .attendance-row {
+            display: flex;
             border-bottom: 1px solid #e9ecef;
             transition: background-color 0.2s;
         }
 
-        .log-entry:hover {
+        .attendance-row:hover {
             background-color: #f8f9fa;
         }
 
-        .log-entry:last-child {
+        .attendance-row:last-child {
             border-bottom: none;
         }
 
-        /* Detail rows within log entries */
+        /* Column styles */
+        .user-info-column {
+            flex: 0 0 20%;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-right: 1px solid #e9ecef;
+        }
+
+        .log-column {
+            flex: 0 0 40%;
+            padding: 15px;
+        }
+
+        .in-log {
+            border-right: 1px solid #e9ecef;
+        }
+
+        /* User info styles */
+        .user-name {
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-bottom: 5px;
+            color: #495057;
+        }
+
+        .user-date {
+            font-weight: 500;
+            color: #6c757d;
+            margin-bottom: 10px;
+        }
+
+        .user-detail {
+            font-size: 0.9em;
+            color: #6c757d;
+            margin-bottom: 3px;
+        }
+
+        /* Log details styling */
+        .log-details {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
         .log-detail {
             display: flex;
-            margin-bottom: 8px;
             line-height: 1.4;
-            align-items: baseline;
         }
 
-        .log-detail:last-child {
-            margin-bottom: 0;
-        }
-
-        /* Column name styling with natural border */
         .detail-name {
-            flex: 0 0 150px;
+            flex: 0 0 100px;
             font-weight: 600;
             color: #495057;
             border-right: 1px solid #e0e0e0;
@@ -484,18 +553,12 @@ mysqli_close($conn);
             margin-right: 10px;
         }
 
-        /* Remove separator character */
-        .detail-separator {
-            display: none;
-        }
-
-        /* Value styling */
         .detail-value {
             flex: 1;
             color: #212529;
         }
 
-        /* Status indicators */
+        /* Status styles */
         .status {
             padding: 4px 8px;
             border-radius: 4px;
@@ -514,7 +577,7 @@ mysqli_close($conn);
             color: white;
         }
 
-        /* Action links styling */
+        /* Action links */
         .action-links a {
             display: inline-block;
             margin-right: 12px;
@@ -531,32 +594,71 @@ mysqli_close($conn);
             color: #dc3545;
         }
 
-        /* No logs message styling */
+        /* No logs message */
         .no-logs-message {
             padding: 20px;
             text-align: center;
             color: #6c757d;
             font-style: italic;
-            background-color: #f8f9fa;
-            border-radius: 4px;
+            background-color: white;
         }
 
-        /* Make the sections more responsive */
+        /* No log details message */
+        .no-log-details {
+            padding: 15px;
+            text-align: center;
+            color: #6c757d;
+            font-style: italic;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            border: 1px dashed #dee2e6;
+        }
+
+        /* Responsive adjustments */
         @media (max-width: 992px) {
-            .attendance-tables-container {
+            .attendance-row {
                 flex-direction: column;
             }
 
-            .attendance-table-wrapper {
-                min-width: 100%;
+            .user-info-column,
+            .log-column {
+                flex: 1;
+                width: 100%;
+                border-right: none;
             }
 
-            .detail-name {
-                flex: 0 0 120px;
+            .user-info-column {
+                border-bottom: 1px solid #e9ecef;
+            }
+
+            .in-log {
+                border-right: none;
+                border-bottom: 1px solid #e9ecef;
+            }
+
+            .attendance-header {
+                display: none;
+                /* Hide header on mobile */
+            }
+
+            /* Label columns on mobile */
+            .in-log::before,
+            .out-log::before {
+                display: block;
+                font-weight: bold;
+                margin-bottom: 10px;
+                color: #495057;
+            }
+
+            .in-log::before {
+                content: "IN Record";
+            }
+
+            .out-log::before {
+                content: "OUT Record";
             }
         }
 
-        /* Handle smaller screens */
         @media (max-width: 576px) {
             .log-detail {
                 flex-direction: column;
@@ -701,150 +803,45 @@ mysqli_close($conn);
                     </div>
 
                     <div class="attendance-tables-container">
-
-                        <div class="attendance-table-wrapper in-section">
-                            <h3>IN Logs</h3>
-                            <div class="log-list" id="inLogList">
-                                <?php
-                                if (!empty($in_logs)) {
-                                    foreach ($in_logs as $row) {
-                                        $attendance_log_id = $row['attendance_log_id'];
-                                        $display_name = (isset($row['first_name']) && isset($row['last_name'])) ? htmlspecialchars($row['first_name'] . ' ' . $row['last_name']) : 'Unknown User';
-                                        $timestamp_raw = $row['timestamp'];
-                                        $timestamp_formatted = date("M j, Y, g:i A", strtotime($timestamp_raw));
-                                        $device_id = htmlspecialchars($row['device_id']);
-                                        $location_context = isset($row['location_context']) ? htmlspecialchars($row['location_context']) : 'N/A';
-
-                                        // Determine Method(s) Used
-                                        $methods_used_list = [];
-                                        if (isset($row['face_recognized']) && $row['face_recognized'] !== NULL || isset($row['confidence_score']) && $row['confidence_score'] !== NULL) {
-                                            $methods_used_list[] = 'Face';
-                                        }
-                                        if (isset($row['rfid_card_id_used']) && $row['rfid_card_id_used'] !== NULL) {
-                                            $methods_used_list[] = 'RFID';
-                                        }
-                                        $methods_used_text = empty($methods_used_list) ? 'N/A' : implode(', ', $methods_used_list);
-
-                                        // Determine Verification Details
-                                        $verification_details_list = [];
-                                        if (isset($row['face_recognized']) && $row['face_recognized'] === TRUE) {
-                                            $verification_details_list[] = 'Face: Recognized';
-                                            if (isset($row['confidence_score']) && $row['confidence_score'] !== NULL) {
-                                                $verification_details_list[] = '(' . htmlspecialchars(number_format($row['confidence_score'], 2)) . '%)';
-                                            }
-                                        } elseif (isset($row['face_recognized']) && $row['face_recognized'] === FALSE) {
-                                            if (isset($row['confidence_score']) && $row['confidence_score'] !== NULL) {
-                                                $verification_details_list[] = 'Face: Not Recognized (' . htmlspecialchars(number_format($row['confidence_score'], 2)) . '%)';
-                                            } else {
-                                                $verification_details_list[] = 'Face: Attempted';
-                                            }
-                                        }
-
-                                        if (isset($row['rfid_card_id_used']) && $row['rfid_card_id_used'] !== NULL) {
-                                            $verification_details_list[] = 'RFID: ' . htmlspecialchars($row['rfid_card_id_used']);
-                                        }
-                                        $verification_details_text = empty($verification_details_list) ? 'N/A' : implode(' ', $verification_details_list);
-
-
-                                        // Determine Access Granted Status Display
-                                        $access_granted = isset($row['access_granted']) ? $row['access_granted'] : FALSE;
-                                        $status_text = $access_granted ? 'Granted' : 'Denied';
-                                        $status_class = $access_granted ? 'status-granted' : 'status-denied';
-
-                                        // Output the log entry details using divs
-                                        echo <<<HTML
-                                            <div class="log-entry">
-                                                <div class="log-detail"><span class="detail-name">Name</span><span class="detail-separator">  </span><span class="detail-value">{$display_name}</span></div>
-                                                <div class="log-detail"><span class="detail-name">Timestamp</span><span class="detail-separator">  </span><span class="detail-value">{$timestamp_formatted}</span></div>
-                                                <div class="log-detail"><span class="detail-name">Type</span><span class="detail-separator"> </span><span class="detail-value">{$row['log_type']}</span></div>
-                                                <div class="log-detail"><span class="detail-name">Device ID</span><span class="detail-separator">  </span><span class="detail-value">{$device_id}</span></div>
-                                                <div class="log-detail"><span class="detail-name">Location</span><span class="detail-separator">  </span><span class="detail-value">{$location_context}</span></div>
-                                                <div class="log-detail"><span class="detail-name">Method(s) Used</span><span class="detail-separator">  </span><span class="detail-value">{$methods_used_text}</span></div>
-                                                <div class="log-detail"><span class="detail-name">Verification Details</span><span class="detail-separator">  </span><span class="detail-value">{$verification_details_text}</span></div>
-                                                <div class="log-detail"><span class="detail-name">Access Granted</span><span class="detail-separator">  </span><span class="detail-value"><span class="status {$status_class}">{$status_text}</span></span></div>
-                                                <div class="log-detail action-links"><span class="detail-name">Action</span><span class="detail-separator">  </span><span class="detail-value"><a href="view_log_details.php?id={$attendance_log_id}" title="View Details">View</a> <a href="delete_log.php?id={$attendance_log_id}" class="delete-link" title="Delete Log" onclick="return confirm('Are you sure you want to delete this log entry?');">Delete</a></span></div>
-                                            </div>
-HTML;
-                                    }
-                                } else {
-                                    echo '<div class="no-logs-message">No IN logs found for the selected criteria.</div>';
-                                }
-                                ?>
+                        <div class="attendance-table">
+                            <div class="attendance-header">
+                                <div class="user-info-column">Employee Details</div>
+                                <div class="log-column">IN Record</div>
+                                <div class="log-column">OUT Record</div>
                             </div>
+
+                            <?php if (empty($user_logs)): ?>
+                                <div class="no-logs-message">No attendance logs found for the selected criteria.</div>
+                            <?php else: ?>
+                                <?php foreach ($user_logs as $user_log): ?>
+                                    <?php
+                                    $display_name = (isset($user_log['first_name']) && isset($user_log['last_name'])) ?
+                                        htmlspecialchars($user_log['first_name'] . ' ' . $user_log['last_name']) : 'Unknown User';
+                                    $display_date = date("M j, Y", strtotime($user_log['date']));
+                                    $display_email = htmlspecialchars($user_log['email'] ?? 'No Email');
+                                    $display_role = htmlspecialchars($user_log['role'] ?? 'No Role');
+                                    ?>
+                                    <div class="attendance-row">
+                                        <div class="user-info-column">
+                                            <div class="user-name"><?= $display_name ?></div>
+                                            <div class="user-date"><?= $display_date ?></div>
+                                            <div class="user-detail"><?= $display_email ?></div>
+                                            <div class="user-detail"><?= $display_role ?></div>
+                                        </div>
+                                        <div class="log-column in-log">
+                                            <?= formatLogDetails($user_log['in_log']) ?>
+                                        </div>
+                                        <div class="log-column out-log">
+                                            <?= formatLogDetails($user_log['out_log']) ?>
+                                        </div>
+                                    </div>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
                         </div>
-
-                        <div class="attendance-table-wrapper out-section">
-                            <h3>OUT Logs</h3>
-                            <div class="log-list" id="outLogList">
-                                <?php
-                                if (!empty($out_logs)) {
-                                    foreach ($out_logs as $row) {
-                                        $attendance_log_id = $row['attendance_log_id'];
-                                        $display_name = (isset($row['first_name']) && isset($row['last_name'])) ? htmlspecialchars($row['first_name'] . ' ' . $row['last_name']) : 'Unknown User';
-                                        $timestamp_raw = $row['timestamp'];
-                                        $timestamp_formatted = date("M j, Y, g:i A", strtotime($timestamp_raw));
-                                        $device_id = htmlspecialchars($row['device_id']);
-                                        $location_context = isset($row['location_context']) ? htmlspecialchars($row['location_context']) : 'N/A';
-
-                                        // Determine Method(s) Used
-                                        $methods_used_list = [];
-                                        if (isset($row['face_recognized']) && $row['face_recognized'] !== NULL || isset($row['confidence_score']) && $row['confidence_score'] !== NULL) {
-                                            $methods_used_list[] = 'Face';
-                                        }
-                                        if (isset($row['rfid_card_id_used']) && $row['rfid_card_id_used'] !== NULL) {
-                                            $methods_used_list[] = 'RFID';
-                                        }
-                                        $methods_used_text = empty($methods_used_list) ? 'N/A' : implode(', ', $methods_used_list);
-
-                                        // Determine Verification Details
-                                        $verification_details_list = [];
-                                        if (isset($row['face_recognized']) && $row['face_recognized'] === TRUE) {
-                                            $verification_details_list[] = 'Face: Recognized';
-                                            if (isset($row['confidence_score']) && $row['confidence_score'] !== NULL) {
-                                                $verification_details_list[] = '(' . htmlspecialchars(number_format($row['confidence_score'], 2)) . '%)';
-                                            }
-                                        } elseif (isset($row['face_recognized']) && $row['face_recognized'] === FALSE) {
-                                            if (isset($row['confidence_score']) && $row['confidence_score'] !== NULL) {
-                                                $verification_details_list[] = 'Face: Not Recognized (' . htmlspecialchars(number_format($row['confidence_score'], 2)) . '%)';
-                                            } else {
-                                                $verification_details_list[] = 'Face: Attempted';
-                                            }
-                                        }
-
-                                        if (isset($row['rfid_card_id_used']) && $row['rfid_card_id_used'] !== NULL) {
-                                            $verification_details_list[] = 'RFID: ' . htmlspecialchars($row['rfid_card_id_used']);
-                                        }
-                                        $verification_details_text = empty($verification_details_list) ? 'N/A' : implode(' ', $verification_details_list);
+                    </div>
 
 
-                                        // Determine Access Granted Status Display
-                                        $access_granted = isset($row['access_granted']) ? $row['access_granted'] : FALSE;
-                                        $status_text = $access_granted ? 'Granted' : 'Denied';
-                                        $status_class = $access_granted ? 'status-granted' : 'status-denied';
-
-                                        // Output the log entry details using divs
-                                        echo <<<HTML
-                                            <div class="log-entry">
-                                                <div class="log-detail"><span class="detail-name">Name</span><span class="detail-separator"> </span><span class="detail-value">{$display_name}</span></div>
-                                                <div class="log-detail"><span class="detail-name">Timestamp</span><span class="detail-separator"> </span><span class="detail-value">{$timestamp_formatted}</span></div>
-                                                <div class="log-detail"><span class="detail-name">Type</span><span class="detail-separator"> </span><span class="detail-value">{$row['log_type']}</span></div>
-                                                <div class="log-detail"><span class="detail-name">Device ID</span><span class="detail-separator">  </span><span class="detail-value">{$device_id}</span></div>
-                                                <div class="log-detail"><span class="detail-name">Location</span><span class="detail-separator">  </span><span class="detail-value">{$location_context}</span></div>
-                                                <div class="log-detail"><span class="detail-name">Method(s) Used</span><span class="detail-separator"> </span><span class="detail-value">{$methods_used_text}</span></div>
-                                                <div class="log-detail"><span class="detail-name">Verification Details</span><span class="detail-separator"> </span><span class="detail-value">{$verification_details_text}</span></div>
-                                                <div class="log-detail"><span class="detail-name">Access Granted</span><span class="detail-separator"> </span><span class="detail-value"><span class="status {$status_class}">{$status_text}</span></span></div>
-                                                <div class="log-detail action-links"><span class="detail-name">Action</span><span class="detail-separator"> </span><span class="detail-value"><a href="view_log_details.php?id={$attendance_log_id}" title="View Details">View</a> <a href="delete_log.php?id={$attendance_log_id}" class="delete-link" title="Delete Log" onclick="return confirm('Are you sure you want to delete this log entry?');">Delete</a></span></div>
-                                            </div>
-HTML;
-                                    }
-                                } else {
-                                    echo '<div class="no-logs-message">No OUT logs found for the selected criteria.</div>';
-                                }
-                                ?>
-                            </div>
-                        </div>
-
-                    </div> <?php if ($total_pages > 1) : ?>
+                    <?php if ($total_pages > 1) : ?>
                         <div class="pagination">
                             <?php if ($page > 1) : ?>
                                 <a href="<?= htmlspecialchars($base_pagination_url . '&page=' . ($page - 1)) ?>">&laquo; Previous</a>
@@ -853,25 +850,25 @@ HTML;
                             <?php endif; ?>
 
                             <?php
-                                $range = 2; // Number of pages to show around the current page
-                                $start_range = max(1, $page - $range);
-                                $end_range = min($total_pages, $page + $range);
+                            $range = 2; // Number of pages to show around the current page
+                            $start_range = max(1, $page - $range);
+                            $end_range = min($total_pages, $page + $range);
 
-                                for ($i = 1; $i <= $total_pages; $i++) {
-                                    // Show first page, last page, or pages within the range of the current page
-                                    if ($i == 1 || $i == $total_pages || ($i >= $start_range && $i <= $end_range)) {
-                                        if ($i == $page) {
-                                            echo '<span class="current-page">' . $i . '</span>';
-                                        } else {
-                                            echo '<a href="' . htmlspecialchars($base_pagination_url . '&page=' . $i) . '">' . $i . '</a>';
-                                        }
-                                    } elseif (($i == $start_range - 1) || ($i == $end_range + 1)) {
-                                        // Print ellipsis if there's a gap (only once between segments)
-                                        if (($i == $start_range - 1 && $start_range > 2) || ($i == $end_range + 1 && $end_range < $total_pages - 1)) {
-                                            echo '<span>...</span>';
-                                        }
+                            for ($i = 1; $i <= $total_pages; $i++) {
+                                // Show first page, last page, or pages within the range of the current page
+                                if ($i == 1 || $i == $total_pages || ($i >= $start_range && $i <= $end_range)) {
+                                    if ($i == $page) {
+                                        echo '<span class="current-page">' . $i . '</span>';
+                                    } else {
+                                        echo '<a href="' . htmlspecialchars($base_pagination_url . '&page=' . $i) . '">' . $i . '</a>';
+                                    }
+                                } elseif (($i == $start_range - 1) || ($i == $end_range + 1)) {
+                                    // Print ellipsis if there's a gap (only once between segments)
+                                    if (($i == $start_range - 1 && $start_range > 2) || ($i == $end_range + 1 && $end_range < $total_pages - 1)) {
+                                        echo '<span>...</span>';
                                     }
                                 }
+                            }
                             ?>
 
                             <?php if ($page < $total_pages) : ?>
