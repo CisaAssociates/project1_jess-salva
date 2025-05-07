@@ -519,7 +519,6 @@ $base_pagination_url = '?' . http_build_query($query_params);
                                             <td>{$timestamp_formatted}</td>
                                             <td>{$log_type}</td>
                                             <td>{$device_id}</td>
-                                            <td><span class="status {$status_class}">{$status_text}</span></td>
                                             <td class="action-links">
                                                 <a href="view_log_details.php?id={$attendance_log_id}" title="View Details">View</a>
                                                 <a href="delete_log.php?id={$attendance_log_id}" class="delete-link" title="Delete Log" onclick="return confirm('Are you sure you want to delete this log entry?');">Delete</a>
