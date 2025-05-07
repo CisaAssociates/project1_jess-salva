@@ -243,7 +243,7 @@ $base_pagination_url = '?' . http_build_query($query_params);
             text-decoration: none;
         }
         .action-links a:hover {
-            text_decoration: underline;
+            text-decoration: underline;
         }
         .action-links .delete-link {
             color: #d9534f; /* Red */
@@ -257,7 +257,7 @@ $base_pagination_url = '?' . http_build_query($query_params);
             padding: 1rem;
             background-color: #f9f9f9;
             border: 1px solid #eee;
-            border_radius: 5px;
+            border-radius: 5px;
             display: flex;
             align-items: center;
             gap: 1rem;
@@ -265,7 +265,7 @@ $base_pagination_url = '?' . http_build_query($query_params);
         }
         .filter-form label {
             font-weight: bold;
-            margin_right: 0.5rem;
+            margin-right: 0.5rem;
         }
         .filter-form input[type="date"] {
             padding: 0.4rem;
@@ -286,34 +286,21 @@ $base_pagination_url = '?' . http_build_query($query_params);
         }
         .filter-form .clear-filter-link {
              padding: 0.5rem 1rem;
-             background_color: #f0ad4e;
+             background-color: #f0ad4e;
              color: white;
              border: none;
              border-radius: 4px;
              cursor: pointer;
              text-decoration: none;
              font-size: 0.9em; /* Match button size roughly */
-             display: inline_block; /* Make it behave like a button */
-             text_align: center;
-             line_height: normal; /* Adjust line height if needed */
+             display: inline-block; /* Make it behave like a button */
+             text-align: center;
+             line-height: normal; /* Adjust line height if needed */
         }
         .filter-form .clear-filter-link:hover {
              background-color: #ec971f;
         }
 
-         /* Adjust table column widths or add responsive styles if needed */
-        .table-container table th,
-        .table-container table td {
-            padding: 0.75rem; /* Standard padding */
-            vertical-align: top; /* Align content to top */
-            border-bottom: 1px solid #ddd; /* Add subtle row separators */
-        }
-
-        .table-container table th {
-            background-color: #f2f2f2; /* Light grey background for headers */
-            font_weight: bold;
-            text-align: left;
-        }
 
     </style>
 </head>
