@@ -401,7 +401,6 @@ mysqli_close($conn);
 
         /* Optional: Style for the separator */
         .detail-name::after {
-            
             /* Add the separator after the name */
             font-weight: normal;
             /* Don't bold the separator */
