@@ -52,13 +52,17 @@ if ($stmt_card) { // Check if statement prepared successfully
 }
 
 
-// --- Get Filter Dates from GET Request (using isset ternary) ---
-$filter_start_date = isset($_GET['start_date']) ? $_GET['start_date'] : ''; // Default to empty string if not set
-$filter_end_date = isset($_GET['end_date']) ? $_GET['end_date'] : '';   // Default to empty string if not set
+// ...
+$filter_start_date = isset($_GET['start_date']) ? $_GET['start_date'] : ''; // around line 49
+$filter_end_date = isset($_GET['end_date']) ? $_GET['end_date'] : '';     // around line 50
 
 // Basic validation (ensure they look like dates if provided)
-$filter_start_date = (preg_match("/^\d{4}-\d{2}-\d{2}$/", $filter_start_date)) ? $filter_start_date : '';
-$filter_end_date = (preg_match("/^\d{4}-\d{2}-\d{2}$/", $filter_end_date)) ? $filter_end_date : '';
+$filter_start_date = (preg_match("/^\d{4}-\d{2}-\d{2}$/", $filter_start_date)) ? $filter_start_date : ''; // around line 52
+$filter_end_date = (preg_match("/^\d{4}-\d{2}-\d{2}$/", $filter_end_date)) ? $filter_end_date : '';     // around line 53 -- Check this line in YOUR file!
+
+// --- Pagination Logic ---                                                                               // around line 54
+$limit = 100;                                                                                           // around line 55 -- This is line 55 in MY code, maybe it's different in yours
+// ...
 
 // --- Pagination Logic ---
 // Note: Pagination here applies to the total number of logs before splitting into IN/OUT
