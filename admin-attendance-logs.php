@@ -421,7 +421,6 @@ mysqli_close($conn);
             color: #777;
         }
 
-        css
 
         /* Enhanced Table Styles for Log Entries */
         .attendance-table-wrapper {
@@ -469,23 +468,26 @@ mysqli_close($conn);
             display: flex;
             margin-bottom: 8px;
             line-height: 1.4;
+            align-items: baseline;
         }
 
         .log-detail:last-child {
             margin-bottom: 0;
         }
 
-        /* Column name styling */
+        /* Column name styling with natural border */
         .detail-name {
             flex: 0 0 150px;
             font-weight: 600;
             color: #495057;
+            border-right: 1px solid #e0e0e0;
+            padding-right: 10px;
+            margin-right: 10px;
         }
 
-        /* Separator styling */
+        /* Remove separator character */
         .detail-separator {
-            color: #adb5bd;
-            margin: 0 8px;
+            display: none;
         }
 
         /* Value styling */
@@ -564,18 +566,16 @@ mysqli_close($conn);
             .detail-name {
                 flex: none;
                 margin-bottom: 4px;
-            }
-
-            .detail-separator {
-                display: none;
+                border-right: none;
+                border-bottom: 1px solid #e0e0e0;
+                padding-bottom: 4px;
+                margin-right: 0;
             }
 
             .detail-value {
-                padding-left: 8px;
+                padding-top: 4px;
             }
         }
-
-        
     </style>
 </head>
 
