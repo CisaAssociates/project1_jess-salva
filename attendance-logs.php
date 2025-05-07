@@ -425,6 +425,7 @@ $base_pagination_url = '?' . http_build_query($query_params);
                          <?php if (!empty($filter_start_date) || !empty($filter_end_date)) : ?>
                             <a href="?" class="clear-filter-link">Clear Filter</a>
                         <?php endif; ?>
+                        <a href="?" class="clear-filter-link">Clear Filter</a>
                     </form>
 
                     <div class="table-controls">
