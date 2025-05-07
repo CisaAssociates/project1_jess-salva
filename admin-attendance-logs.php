@@ -4,7 +4,7 @@ session_start();
 
 
 if (!isset($_SESSION['user_data'])) {
-    header("Location: index.php"); 
+    header("Location: index.php");
     exit();
 }
 
@@ -47,15 +47,15 @@ if ($stmt_card) { // Check if statement prepared successfully
 
 
 // ...
-$filter_start_date = isset($_GET['start_date']) ? $_GET['start_date'] : ''; 
-$filter_end_date = isset($_GET['end_date']) ? $_GET['end_date'] : '';     
+$filter_start_date = isset($_GET['start_date']) ? $_GET['start_date'] : '';
+$filter_end_date = isset($_GET['end_date']) ? $_GET['end_date'] : '';
 
 
 $filter_start_date = (preg_match("/^\d{4}-\d{2}-\d{2}$/", $filter_start_date)) ? $filter_start_date : '';
-$filter_end_date = (preg_match("/^\d{4}-\d{2}-\d{2}$/", $filter_end_date)) ? $filter_end_date : '';     
+$filter_end_date = (preg_match("/^\d{4}-\d{2}-\d{2}$/", $filter_end_date)) ? $filter_end_date : '';
 
 // --- Pagination Logic ---                                                                               
-$limit = 100;                                                                                           
+$limit = 100;
 $limit = 100;
 $page = isset($_GET['page']) && is_numeric($_GET['page']) ? (int)$_GET['page'] : 1;
 $offset = ($page - 1) * $limit;
@@ -140,14 +140,14 @@ if (!$stmt_logs) {
 }
 
 
-$log_params = $params; 
-$log_param_types = $param_types; 
+$log_params = $params;
+$log_param_types = $param_types;
 
 $log_params[] = $limit;
 $log_param_types .= "i";
 
-$log_params[] = $offset; 
-$log_param_types .= "i"; 
+$log_params[] = $offset;
+$log_param_types .= "i";
 
 if (!empty($log_param_types)) {
     $a_params_logs = [];
@@ -194,74 +194,105 @@ mysqli_close($conn);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Attendance Logs Dashboard</title>
     <link rel="stylesheet" href="./styles/style.css">
-    <link rel="stylesheet" href="./styles/admin-dashboard.css">
+
     <style>
-        /* Existing styles for pagination, status, filter form, etc. */
-        .pagination {
-            margin-top: 1.5rem;
-            text-align: center;
+        /* Enhanced Table Styles for Log Entries */
+        .attendance-table-wrapper {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 1.5rem;
         }
 
-        .pagination a,
-        .pagination span {
-            display: inline-block;
-            padding: 0.5rem 0.8rem;
-            margin: 0 0.2rem;
-            border: 1px solid #ddd;
-            color: #337ab7;
-            text-decoration: none;
-            border-radius: 4px;
-            background-color: #fff;
-        }
-
-        .pagination a:hover {
-            background-color: #eee;
-        }
-
-        .pagination .current-page {
-            font-weight: bold;
-            color: #fff;
+        .attendance-table-wrapper h3 {
             background-color: #337ab7;
-            border-color: #337ab7;
-            cursor: default;
+            color: white;
+            margin-top: 0;
+            padding: 15px;
+            border-bottom: none;
+            font-size: 1.2rem;
+            border-radius: 8px 8px 0 0;
         }
 
-        .pagination .disabled {
-            color: #777;
-            cursor: default;
-            background-color: #f9f9f9;
-            border-color: #ddd;
+        /* Main log container */
+        .log-list {
+            padding: 0;
+            max-height: 600px;
+            overflow-y: auto;
         }
 
-        /* Style for status spans */
+        /* Individual log entry styling */
+        .log-entry {
+            padding: 15px;
+            margin-bottom: 0;
+            border-bottom: 1px solid #e9ecef;
+            transition: background-color 0.2s;
+        }
+
+        .log-entry:hover {
+            background-color: #f8f9fa;
+        }
+
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+
+        /* Detail rows within log entries */
+        .log-detail {
+            display: flex;
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+
+        .log-detail:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Column name styling */
+        .detail-name {
+            flex: 0 0 150px;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        /* Separator styling */
+        .detail-separator {
+            color: #adb5bd;
+            margin: 0 8px;
+        }
+
+        /* Value styling */
+        .detail-value {
+            flex: 1;
+            color: #212529;
+        }
+
+        /* Status indicators */
         .status {
-            padding: 0.2em 0.6em;
-            border-radius: 0.25em;
+            padding: 4px 8px;
+            border-radius: 4px;
             font-size: 0.85em;
-            font-weight: bold;
-            color: #fff;
-            white-space: nowrap;
+            font-weight: 500;
+            display: inline-block;
         }
 
         .status-granted {
-            background-color: #5cb85c;
-            /* Green */
+            background-color: #28a745;
+            color: white;
         }
 
         .status-denied {
-            background-color: #d9534f;
-            /* Red */
+            background-color: #dc3545;
+            color: white;
         }
 
-        .status-unknown {
-            background-color: #777;
-            /* Gray */
-        }
-
+        /* Action links styling */
         .action-links a {
-            margin-right: 0.5rem;
-            color: #337ab7;
+            display: inline-block;
+            margin-right: 12px;
+            color: #007bff;
             text-decoration: none;
+            font-weight: 500;
         }
 
         .action-links a:hover {
@@ -269,156 +300,52 @@ mysqli_close($conn);
         }
 
         .action-links .delete-link {
-            color: #d9534f;
-            /* Red */
+            color: #dc3545;
         }
 
-        .action-links .delete-link:hover {
-            color: #c9302c;
-        }
-
-        /* Styles for Filter Form */
-        .filter-form {
-            margin-bottom: 1rem;
-            padding: 1rem;
-            background-color: #f9f9f9;
-            border: 1px solid #eee;
-            border-radius: 5px;
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            flex-wrap: wrap;
-            /* Allow wrapping on smaller screens */
-        }
-
-        .filter-form label {
-            font-weight: bold;
-            margin-right: 0.5rem;
-        }
-
-        .filter-form input[type="date"] {
-            padding: 0.4rem;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-
-        .filter-form button {
-            padding: 0.5rem 1rem;
-            background-color: #337ab7;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-
-        .filter-form button:hover {
-            background-color: #286090;
-        }
-
-        .filter-form .clear-filter-link {
-            padding: 0.5rem 1rem;
-            background-color: #f0ad4e;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            text-decoration: none;
-            font-size: 0.9em;
-            /* Match button size roughly */
-            display: inline-block;
-            /* Make it behave like a button */
-            text-align: center;
-            line-height: normal;
-            /* Adjust line height if needed */
-        }
-
-        .filter-form .clear-filter-link:hover {
-            background-color: #ec971f;
-        }
-
-        /* --- Styles for Side-by-Side Sections and Log Entries --- */
-        .attendance-tables-container {
-            display: flex;
-            /* Use Flexbox to arrange sections side-by-side */
-            gap: 20px;
-            /* Space between the sections */
-            flex-wrap: wrap;
-            /* Allow sections to wrap on smaller screens */
-        }
-
-        .attendance-table-wrapper {
-            flex: 1;
-            /* Allow sections to grow and shrink */
-            min-width: 300px;
-            /* Minimum width before wrapping */
-            background-color: #fff;
-            /* White background for each section */
-            padding: 1rem;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            margin-bottom: 1rem;
-            /* Space below sections */
-        }
-
-        .attendance-table-wrapper h3 {
-            margin-top: 0;
-            border-bottom: 2px solid #eee;
-            padding-bottom: 0.5rem;
-            margin-bottom: 1rem;
-        }
-
-        /* Style for individual log entries */
-        .log-entry {
-            margin-bottom: 1rem;
-            /* Space after each log entry */
-            padding-bottom: 1rem;
-            border-bottom: 1px solid #eee;
-            /* Separator line */
-        }
-
-        .log-entry:last-child {
-            margin-bottom: 0;
-            padding-bottom: 0;
-            border-bottom: none;
-            /* No border after the last entry */
-        }
-
-        /* Style for each detail line (column name | value) */
-        .log-detail {
-            margin-bottom: 0.4rem;
-            /* Space between detail lines */
-            /* You can use Flexbox here for alignment if needed, e.g., */
-            /* display: flex; */
-            /* align-items: baseline; */
-        }
-
-        .detail-name {
-            font-weight: bold;
-            margin-right: 0.5rem;
-            /* Space between name and separator */
-        }
-
-        /* Optional: Style for the separator */
-        .detail-name::after {
-            content: " |";
-            /* Add the separator after the name */
-            font-weight: normal;
-            /* Don't bold the separator */
-            margin-left: 0.5rem;
-            /* Space between separator and value */
-        }
-
-        .detail-value {
-            /* Add specific styles for the value if needed */
-        }
-
-        /* Style for the 'No logs found' message */
+        /* No logs message styling */
         .no-logs-message {
+            padding: 20px;
             text-align: center;
-            padding: 1rem;
+            color: #6c757d;
             font-style: italic;
-            color: #777;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+
+        /* Make the sections more responsive */
+        @media (max-width: 992px) {
+            .attendance-tables-container {
+                flex-direction: column;
+            }
+
+            .attendance-table-wrapper {
+                min-width: 100%;
+            }
+
+            .detail-name {
+                flex: 0 0 120px;
+            }
+        }
+
+        /* Handle smaller screens */
+        @media (max-width: 576px) {
+            .log-detail {
+                flex-direction: column;
+            }
+
+            .detail-name {
+                flex: none;
+                margin-bottom: 4px;
+            }
+
+            .detail-separator {
+                display: none;
+            }
+
+            .detail-value {
+                padding-left: 8px;
+            }
         }
     </style>
 </head>
