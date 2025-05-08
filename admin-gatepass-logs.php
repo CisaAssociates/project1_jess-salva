@@ -42,8 +42,8 @@ if ($data_card = mysqli_fetch_assoc($result_card)) {
 mysqli_stmt_close($stmt_card);
 
 // --- Get Filter Dates from GET Request ---
-$filter_start_date = $_GET['start_date'] ?? date('Y-m-d'); // Default to empty string if not set
-$filter_end_date = $_GET['end_date'] ?? date('Y-m-d');   // Default to empty string if not set
+$filter_start_date = $_GET['start_date'] ?? ''; // Default to empty string if not set
+$filter_end_date = $_GET['end_date'] ?? '';   // Default to empty string if not set
 
 // Basic validation (ensure they look like dates if provided)
 $filter_start_date = (preg_match("/^\d{4}-\d{2}-\d{2}$/", $filter_start_date)) ? $filter_start_date : '';
