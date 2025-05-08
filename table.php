@@ -9,15 +9,7 @@ if (!$conn) {
 }
 
 $sql = "
-SELECT * FROM faceencodings 
-LEFT JOIN users ON faceencodings.user_id = users.user_id 
-LEFT JOIN rfidcards ON users.user_id = rfidcards.user_id
-
-UNION
-
-SELECT * FROM faceencodings 
-RIGHT JOIN users ON faceencodings.user_id = users.user_id 
-RIGHT JOIN rfidcards ON users.user_id = rfidcards.user_id
+SELECT * FROM users
 ";
 
 $result = mysqli_query($conn, $sql);
