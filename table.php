@@ -9,7 +9,15 @@ if (!$conn) {
 }
 
 $sql = "
-SELECT * FROM users
+SELECT * FROM faceencodings 
+LEFT JOIN users ON faceencodings.user_id = users.user_id 
+LEFT JOIN rfidcards ON users.user_id = rfidcards.user_id
+
+UNION
+
+SELECT * FROM faceencodings 
+RIGHT JOIN users ON faceencodings.user_id = users.user_id 
+RIGHT JOIN rfidcards ON users.user_id = rfidcards.user_id
 ";
 
 $result = mysqli_query($conn, $sql);
@@ -24,7 +32,7 @@ if ($result) {
     echo "Error: " . mysqli_error($conn);
 }
 
-$stmt = "UPDATE users SET first_name = 'admin' , last_name = 'admin' WHERE user_id = 38 ";
+$stmt = "DELETE FROM rfidcards WHERE card_id = 'f3c49fe4' ";
 mysqli_query($conn,$stmt);
 
 mysqli_close($conn);
