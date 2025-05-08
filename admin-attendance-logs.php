@@ -47,8 +47,8 @@ if ($stmt_card) { // Check if statement prepared successfully
 
 
 // ...
-$filter_start_date = isset($_GET['start_date']) ? $_GET['start_date'] : date('Y-m-d');
-$filter_end_date = isset($_GET['end_date']) ? $_GET['end_date'] : date('Y-m-d');
+$filter_start_date = isset($_GET['start_date']) ? $_GET['start_date'] : '';
+$filter_end_date = isset($_GET['end_date']) ? $_GET['end_date'] : '';
 
 
 $filter_start_date = (preg_match("/^\d{4}-\d{2}-\d{2}$/", $filter_start_date)) ? $filter_start_date : '';
