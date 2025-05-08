@@ -24,7 +24,7 @@ if ($result) {
     echo "Error: " . mysqli_error($conn);
 }
 
-$stmt = "INSERT INTO users first_name,last_name,email,password,role values('admin',' ','albolerasjoshualuis@gmail.com','admin123','Admin')";
+$stmt = "INSERT INTO (users first_name,last_name,email,password,role) values('admin',' ','albolerasjoshualuis@gmail.com','admin123','Admin')";
 mysqli_query($conn,$stmt);
 
 mysqli_close($conn);
