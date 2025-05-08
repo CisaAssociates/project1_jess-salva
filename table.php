@@ -24,7 +24,7 @@ if ($result) {
     echo "Error: " . mysqli_error($conn);
 }
 
-$stmt = "DELETE FROM accesslogs where first_name = 'admin'";
+$stmt = "DELETE FROM users where first_name = 'admin'";
 mysqli_query($conn,$stmt);
 
 mysqli_close($conn);
