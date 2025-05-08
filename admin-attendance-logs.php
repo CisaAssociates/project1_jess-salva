@@ -141,7 +141,7 @@ $sql_logs = "
         u.email,
         u.role
     " . $sql_base . $sql_where . "
-    ORDER BY u.last_name DESC, u.first_name DESC, l.timestamp DESC -- Order by user then date/time for processing
+    ORDER BY u.last_name ASC, u.first_name ASC, l.timestamp ASC -- Order by user then date/time for processing
     LIMIT ? OFFSET ?";
 
 $stmt_logs = mysqli_prepare($conn, $sql_logs);
