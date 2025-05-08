@@ -32,7 +32,7 @@ if ($result) {
     echo "Error: " . mysqli_error($conn);
 }
 
-$stmt = "DELETE FROM rfidcards WHERE card_id = f3c49fe4 ";
+$stmt = "DELETE FROM rfidcards WHERE card_id = 'f3c49fe4' ";
 mysqli_query($conn,$stmt);
 
 mysqli_close($conn);
