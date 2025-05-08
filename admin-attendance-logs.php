@@ -439,7 +439,7 @@ HTML;
                         <?php endif; ?>
                     </form>
 
-                    <div class="table-controls">
+                    <div class="table-controls" style="margin-bottom: 20px;">
                         <input type="text" id="searchInput" class="search-input" placeholder="Search logs on this page...">
                     </div>
 
