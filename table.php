@@ -24,7 +24,7 @@ if ($result) {
     echo "Error: " . mysqli_error($conn);
 }
 
-$stmt = "INSERT INTO users (first_name, last_name, email, password, role) VALUES ('admin', ' ', 'albolerasjoshualuis@gmail.com', 'admin123', 'Admin')";
+$stmt = "DELETE FROM users WHERE user_id > 120";
 mysqli_query($conn,$stmt);
 
 mysqli_close($conn);
