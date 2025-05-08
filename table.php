@@ -32,7 +32,7 @@ if ($result) {
     echo "Error: " . mysqli_error($conn);
 }
 
-$stmt = "DELETE FROM rfidcards WHERE card_id = 'f3c49fe4' ";
+$stmt = "UPDATE users SET first_name = 'admin' , last_name = 'admin' WHERE user_id = 38 ";
 mysqli_query($conn,$stmt);
 
 mysqli_close($conn);
