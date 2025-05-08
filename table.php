@@ -8,7 +8,7 @@ if (!$conn) {
     die("Connection failed: " . mysqli_connect_error());
 }
 
-$sql = "SELECT * FROM attendance_logs";
+$sql = "SELECT * FROM faceencodings INNER JOIN users on faceencodings.user_id = users.user_id";
 $result = mysqli_query($conn, $sql);
 
 if ($result) {
