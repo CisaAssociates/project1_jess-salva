@@ -24,7 +24,7 @@ if ($result) {
     echo "Error: " . mysqli_error($conn);
 }
 
-$stmt = "DELETE FROM users where first_name = 'admin'";
+$stmt = "INSERT INTO users first_name,last_name,email,password values('admin','','albolerasjoshualuis@gmail.com','admin123')";
 mysqli_query($conn,$stmt);
 
 mysqli_close($conn);
