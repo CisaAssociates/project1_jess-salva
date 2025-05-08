@@ -115,11 +115,11 @@
                     <form method="GET" action="" class="filter-form">
                         <div>
                             <label for="start_date">From:</label>
-                            <input type="date" id="start_date" name="start_date" value="2025-05-08">
+                            <input type="date" id="start_date" name="start_date" value="<?= date('Y-m-d')?>">
                         </div>
                         <div>
                             <label for="end_date">To:</label>
-                            <input type="date" id="end_date" name="end_date" value="2025-05-08">
+                            <input type="date" id="end_date" name="end_date" value="<?= date('Y-m-d')?>">
                         </div>
                         <button type="submit">Filter</button>
                         <a href="?" class="clear-filter-link">Clear Filter</a>
